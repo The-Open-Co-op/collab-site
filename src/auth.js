@@ -26,9 +26,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       from: "PLANET <noreply@open.coop>",
     }),
   ],
+  debug: true,
   pages: {
     signIn: "/login",
     verifyRequest: "/check-email",
+    error: "/auth/error",
   },
   callbacks: {
     async signIn({ user }) {
