@@ -23,7 +23,7 @@ export async function GET(req) {
     { expiresIn: "30d" }
   );
 
-  // Check OC membership in background (non-blocking for the redirect)
+  // Check OC membership
   let isMember = false;
   try {
     const res = await fetch("https://api.opencollective.com/graphql/v2", {
@@ -48,10 +48,14 @@ export async function GET(req) {
       }),
     });
     const data = await res.json();
+    if (data.errors) {
+      console.error("OC membership check errors:", JSON.stringify(data.errors));
+    }
     const members = data?.data?.account?.members?.nodes;
     isMember = members && members.length > 0;
-  } catch {
-    // Continue without membership status
+    console.log("OC membership check:", { email, isMember, memberNodes: members });
+  } catch (err) {
+    console.error("OC membership check failed:", err.message);
   }
 
   // Re-sign with membership status

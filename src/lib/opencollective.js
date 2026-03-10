@@ -33,7 +33,8 @@ export async function getCollectiveStats() {
     query {
       account(slug: "${COLLECTIVE_SLUG}") {
         stats {
-          totalNetAmountReceived { value currency }
+          balance { value currency }
+          yearlyBudget { value currency }
           contributorsCount
         }
       }
@@ -41,13 +42,14 @@ export async function getCollectiveStats() {
   `);
 
   if (!data?.account?.stats) {
-    return { totalRaised: 0, currency: "GBP", memberCount: 0 };
+    return { balance: 0, yearlyBudget: 0, currency: "GBP", memberCount: 0 };
   }
 
-  const { totalNetAmountReceived, contributorsCount } = data.account.stats;
+  const { balance, yearlyBudget, contributorsCount } = data.account.stats;
   return {
-    totalRaised: totalNetAmountReceived.value,
-    currency: totalNetAmountReceived.currency,
+    balance: balance.value,
+    yearlyBudget: yearlyBudget.value,
+    currency: balance.currency,
     memberCount: contributorsCount,
   };
 }
@@ -56,37 +58,40 @@ export async function getGoals() {
   const data = await ocQuery(`
     query {
       account(slug: "${COLLECTIVE_SLUG}") {
-        tiers {
+        childrenAccounts(accountType: PROJECT) {
           nodes {
             name
             description
             slug
-            goal { amount { value currency } }
             stats {
-              totalAmountReceived { value currency }
+              balance { value currency }
               contributorsCount
             }
+            settings
           }
         }
       }
     }
   `);
 
-  if (!data?.account?.tiers?.nodes) {
+  if (!data?.account?.childrenAccounts?.nodes) {
     return [];
   }
 
-  return data.account.tiers.nodes
-    .filter((tier) => tier.goal?.amount?.value > 0)
-    .map((tier) => ({
-      name: tier.name,
-      description: tier.description,
-      slug: tier.slug,
-      target: tier.goal.amount.value,
-      raised: tier.stats.totalAmountReceived.value,
-      currency: tier.goal.amount.currency,
-      contributors: tier.stats.contributorsCount,
-    }));
+  return data.account.childrenAccounts.nodes
+    .filter((project) => project.settings?.goals?.[0]?.amount > 0)
+    .map((project) => {
+      const goal = project.settings.goals[0];
+      return {
+        name: project.name,
+        description: project.description,
+        slug: project.slug,
+        target: goal.amount / 100, // OC stores goals in cents
+        raised: project.stats.balance.value,
+        currency: project.stats.balance.currency,
+        contributors: project.stats.contributorsCount,
+      };
+    });
 }
 
 export async function getRecentContributions(limit = 3) {

@@ -9,6 +9,41 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
+    // Check OC membership before sending link
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (process.env.OPEN_COLLECTIVE_API_KEY) {
+        headers["Api-Key"] = process.env.OPEN_COLLECTIVE_API_KEY;
+      }
+      const ocRes = await fetch("https://api.opencollective.com/graphql/v2", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query: `
+            query($slug: String!, $email: EmailAddress!) {
+              account(slug: $slug) {
+                members(email: $email, limit: 1) {
+                  nodes { role }
+                }
+              }
+            }
+          `,
+          variables: { slug: "open-coop", email },
+        }),
+      });
+      const ocData = await ocRes.json();
+      const members = ocData?.data?.account?.members?.nodes;
+      if (!members || members.length === 0) {
+        return NextResponse.json(
+          { error: "This email is not registered as an Open Collective member. Join at opencollective.com/open-coop first." },
+          { status: 403 }
+        );
+      }
+    } catch (err) {
+      console.error("OC membership check failed:", err.message);
+      // Allow sign-in if OC check fails (don't block on API errors)
+    }
+
     const token = generateToken(email);
     const baseUrl = process.env.NEXTAUTH_URL || "https://planet.open.coop";
     const magicLink = `${baseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
@@ -26,14 +61,14 @@ export async function POST(req) {
     await transporter.sendMail({
       from: "PLANET <info@open.coop>",
       to: email,
-      subject: "Sign in to PLANET",
-      text: `Click this link to sign in to PLANET:\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
+      subject: "Sign in to The Open Co-op",
+      text: `Sign in to The Open Co-op\n\nClick the link below to sign in.\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
       html: `
         <div style="font-family: sans-serif; max-width: 400px;">
-          <h2>Sign in to PLANET</h2>
-          <p>Click the button below to sign in. This link expires in 10 minutes.</p>
-          <a href="${magicLink}" style="display: inline-block; background: #0066CC; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 24px 0;">Sign in</a>
-          <p style="color: #666; font-size: 14px;">Or copy this link: ${magicLink}</p>
+          <p style="font-size: 14px; color: #333; margin: 0 0 16px 0;">Sign in to The Open Co-op</p>
+          <p style="font-size: 13px; color: #666; margin: 0 0 24px 0;">Click the button below to sign in.</p>
+          <a href="${magicLink}" style="display: inline-block; background: #0066CC; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign in</a>
+          <p style="font-size: 11px; color: #999; margin: 24px 0 0 0;">This link expires in 10 minutes.</p>
         </div>
       `,
     });

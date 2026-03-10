@@ -40,7 +40,7 @@ export default async function HomeLayout({ children }) {
             >
               {item.label}
               {item.external && (
-                <span className="ml-1 text-foreground/30">&nearr;</span>
+                <span className="ml-1 text-foreground/30">&#x2197;</span>
               )}
             </Link>
           ))}

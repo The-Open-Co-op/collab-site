@@ -34,17 +34,17 @@ export default async function Home() {
             Join us
           </a>
           <a
-            href="#vision"
+            href="/login"
             className="rounded-full border border-foreground/20 px-8 py-3 font-medium hover:bg-foreground/5 transition-colors"
           >
-            Learn more
+            Sign in
           </a>
         </div>
         {stats && (
           <div className="mt-12 flex gap-8 text-sm text-foreground/50">
             <span>{stats.memberCount} members</span>
             <span>&middot;</span>
-            <span>{formatCurrency(stats.totalRaised, stats.currency)} raised</span>
+            <span>{formatCurrency(stats.balance, stats.currency)} balance</span>
             {goals.length > 0 && (
               <>
                 <span>&middot;</span>
@@ -114,9 +114,9 @@ export default async function Home() {
               </div>
               <div className="rounded-xl border border-foreground/10 bg-white p-6">
                 <p className="font-display text-3xl font-bold text-primary">
-                  {formatCurrency(stats.totalRaised, stats.currency)}
+                  {formatCurrency(stats.balance, stats.currency)}
                 </p>
-                <p className="mt-1 text-sm text-foreground/60">Total raised</p>
+                <p className="mt-1 text-sm text-foreground/60">Balance</p>
               </div>
               <div className="rounded-xl border border-foreground/10 bg-white p-6">
                 <p className="font-display text-3xl font-bold text-primary">
@@ -146,9 +146,13 @@ export default async function Home() {
                   Math.round((goal.raised / goal.target) * 100)
                 );
                 return (
-                  <div key={goal.slug || goal.name}>
+                  <a
+                    key={goal.slug || goal.name}
+                    href={`https://opencollective.com/open-coop/projects/${goal.slug}`}
+                    className="block"
+                  >
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className="font-medium">{goal.name}</span>
+                      <span className="font-medium hover:text-primary">{goal.name}</span>
                       <span className="text-sm text-foreground/60">
                         {formatCurrency(goal.raised, goal.currency)} /{" "}
                         {formatCurrency(goal.target, goal.currency)}
@@ -163,11 +167,11 @@ export default async function Home() {
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                  </div>
+                  </a>
                 );
               })}
               <a
-                href="https://opencollective.com/open-coop"
+                href="https://opencollective.com/open-coop/projects"
                 className="inline-block mt-2 text-primary hover:underline font-medium"
               >
                 Fund a feature &rarr;
@@ -212,22 +216,22 @@ export default async function Home() {
               {
                 label: "Free",
                 price: "£0/month",
-                href: "https://opencollective.com/open-coop",
+                href: "https://opencollective.com/open-coop/contribute/free-member-98498/checkout?redirect=https://planet.open.coop/login",
               },
               {
                 label: "Supporter",
                 price: "£5/month",
-                href: "https://opencollective.com/open-coop/contribute",
+                href: "https://opencollective.com/open-coop/contribute/supporter-98499/checkout?redirect=https://planet.open.coop/login",
               },
               {
                 label: "Supporter+",
                 price: "£10/month",
-                href: "https://opencollective.com/open-coop/contribute",
+                href: "https://opencollective.com/open-coop/contribute/supporter--98500/checkout?redirect=https://planet.open.coop/login",
               },
               {
                 label: "Champion",
                 price: "£50/month",
-                href: "https://opencollective.com/open-coop/contribute",
+                href: "https://opencollective.com/open-coop/contribute/champion-98501/checkout?redirect=https://planet.open.coop/login",
               },
             ].map((tier) => (
               <a
@@ -251,7 +255,10 @@ export default async function Home() {
       {/* Footer */}
       <footer className="px-6 py-12 border-t border-foreground/10">
         <div className="max-w-3xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm">
+            <a href="/login" className="hover:text-primary">
+              Sign in
+            </a>
             <a href="https://docs.open.coop" className="hover:text-primary">
               Docs
             </a>
@@ -272,8 +279,7 @@ export default async function Home() {
             </a>
           </div>
           <p className="text-sm text-foreground/50">
-            The Open Co-op &middot; Commons infrastructure for future
-            generations
+            &copy; The Open Co-op
           </p>
         </div>
       </footer>

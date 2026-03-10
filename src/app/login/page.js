@@ -83,17 +83,29 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="mt-4 text-sm text-red-600">
+            <p>{error}</p>
+            {error.includes("not registered") && (
+              <a
+                href="https://opencollective.com/open-coop/contribute/free-member-98498/checkout?redirect=https://planet.open.coop/login"
+                className="inline-block mt-2 text-primary hover:underline font-medium"
+              >
+                Join for free →
+              </a>
+            )}
+          </div>
+        )}
 
         <p className="mt-6 text-sm text-foreground/50 text-center">
-          You need to be a member of{" "}
+          Not a member yet?{" "}
           <a
-            href="https://opencollective.com/open-coop"
+            href="/#join"
             className="text-primary hover:underline"
           >
-            The Open Co-op
+            Join The Open Co-op
           </a>{" "}
-          to access the member home.
+          — it&apos;s free.
         </p>
       </div>
     </div>
