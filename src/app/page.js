@@ -124,7 +124,7 @@ export default async function Home() {
                 </p>
                 <p className="mt-1 text-sm text-foreground/60">
                   <a
-                    href="https://cobot.open.coop"
+                    href="https://cobot.murmurations.network/"
                     className="hover:text-primary"
                   >
                     Organisations mapped in the regenerative economy
@@ -167,7 +167,7 @@ export default async function Home() {
                 );
               })}
               <a
-                href="https://opencollective.com/the-open-co-op"
+                href="https://opencollective.com/open-coop"
                 className="inline-block mt-2 text-primary hover:underline font-medium"
               >
                 Fund a feature &rarr;
@@ -212,22 +212,22 @@ export default async function Home() {
               {
                 label: "Free",
                 price: "£0/month",
-                href: "https://opencollective.com/the-open-co-op",
+                href: "https://opencollective.com/open-coop",
               },
               {
                 label: "Supporter",
                 price: "£5/month",
-                href: "https://opencollective.com/the-open-co-op/contribute",
+                href: "https://opencollective.com/open-coop/contribute",
               },
               {
                 label: "Supporter+",
                 price: "£10/month",
-                href: "https://opencollective.com/the-open-co-op/contribute",
+                href: "https://opencollective.com/open-coop/contribute",
               },
               {
                 label: "Champion",
                 price: "£50/month",
-                href: "https://opencollective.com/the-open-co-op/contribute",
+                href: "https://opencollective.com/open-coop/contribute",
               },
             ].map((tier) => (
               <a
@@ -262,7 +262,7 @@ export default async function Home() {
               GitHub
             </a>
             <a
-              href="https://opencollective.com/the-open-co-op"
+              href="https://opencollective.com/open-coop"
               className="hover:text-primary"
             >
               Open Collective

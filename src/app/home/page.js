@@ -43,7 +43,7 @@ export default async function DashboardPage() {
       type: "contribution",
       text: `${c.from} contributed ${formatCurrency(c.amount, c.currency)}`,
       date: c.date,
-      url: `https://opencollective.com/the-open-co-op`,
+      url: `https://opencollective.com/open-coop`,
     })),
   ]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
             </p>
           )}
           <a
-            href="https://opencollective.com/the-open-co-op"
+            href="https://opencollective.com/open-coop"
             className="inline-block mt-4 text-sm text-primary hover:underline font-medium"
           >
             Fund a feature &rarr;

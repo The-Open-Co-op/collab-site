@@ -9,20 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@auth/core": "^0.41.0",
-    "@auth/unstorage-adapter": "^2.11.1",
-    "@auth/upstash-redis-adapter": "^2.11.1",
-    "@upstash/redis": "^1.36.4",
-    "ioredis": "^5.10.0",
     "jose": "^6.2.1",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",
-    "next-auth": "^5.0.0-beta.30",
     "nodemailer": "^6.10.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "redis": "^5.11.0",
-    "unstorage": "^1.17.4"
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -44,7 +44,7 @@ export async function GET(req) {
             }
           }
         `,
-        variables: { slug: "the-open-co-op", email },
+        variables: { slug: "open-coop", email },
       }),
     });
     const data = await res.json();

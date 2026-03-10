@@ -1,5 +1,5 @@
 const OC_API = "https://api.opencollective.com/graphql/v2";
-const COLLECTIVE_SLUG = "the-open-co-op";
+const COLLECTIVE_SLUG = "open-coop";
 
 async function ocQuery(query, variables = {}) {
   const headers = { "Content-Type": "application/json" };

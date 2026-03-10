@@ -88,7 +88,7 @@ export default function LoginPage() {
         <p className="mt-6 text-sm text-foreground/50 text-center">
           You need to be a member of{" "}
           <a
-            href="https://opencollective.com/the-open-co-op"
+            href="https://opencollective.com/open-coop"
             className="text-primary hover:underline"
           >
             The Open Co-op
