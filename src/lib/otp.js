@@ -3,21 +3,17 @@ import jwt from "jsonwebtoken";
 
 const SECRET = process.env.NEXTAUTH_SECRET;
 
-export function generateCode() {
-  return crypto.randomInt(100000, 999999).toString();
+export function generateToken(email) {
+  return jwt.sign({ email, nonce: crypto.randomUUID() }, SECRET, {
+    expiresIn: "10m",
+  });
 }
 
-// Create a signed token containing the code + email, expires in 10 min
-export function createCodeToken(email, code) {
-  return jwt.sign({ email, code }, SECRET, { expiresIn: "10m" });
-}
-
-// Verify the token and check the code matches
-export function verifyCodeToken(token, email, code) {
+export function verifyToken(token) {
   try {
     const payload = jwt.verify(token, SECRET);
-    return payload.email === email && payload.code === code;
+    return payload.email || null;
   } catch {
-    return false;
+    return null;
   }
 }

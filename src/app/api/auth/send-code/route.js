@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import { generateCode, createCodeToken } from "@/lib/otp";
+import { generateToken } from "@/lib/otp";
 
 export async function POST(req) {
   try {
@@ -9,62 +9,44 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
-    // Log config (redact password)
-    const smtpUser = process.env.BREVO_SMTP_USER;
-    const smtpPass = process.env.BREVO_API_KEY;
-    console.log("SMTP config check:", {
-      host: "smtp-relay.brevo.com",
-      port: 587,
-      user: smtpUser ? `${smtpUser.slice(0, 3)}...` : "MISSING",
-      pass: smtpPass ? `${smtpPass.slice(0, 3)}...` : "MISSING",
-      to: email,
-    });
+    const token = generateToken(email);
+    const baseUrl = process.env.NEXTAUTH_URL || "https://planet.open.coop";
+    const magicLink = `${baseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
 
     const transporter = nodemailer.createTransport({
       host: "smtp-relay.brevo.com",
       port: 587,
       secure: false,
       auth: {
-        user: smtpUser,
-        pass: smtpPass,
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_API_KEY,
       },
     });
 
-    // Verify SMTP connection first
-    console.log("Verifying SMTP connection...");
-    await transporter.verify();
-    console.log("SMTP connection verified");
-
-    const code = generateCode();
-    const token = createCodeToken(email, code);
-
-    console.log("Sending email...");
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: "PLANET <noreply@open.coop>",
       to: email,
-      subject: "Your PLANET sign-in code",
-      text: `Your sign-in code is: ${code}\n\nThis code expires in 10 minutes.`,
+      subject: "Sign in to PLANET",
+      text: `Click this link to sign in to PLANET:\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
       html: `
         <div style="font-family: sans-serif; max-width: 400px;">
-          <h2>Your sign-in code</h2>
-          <p style="font-size: 32px; font-weight: bold; letter-spacing: 4px; margin: 24px 0;">${code}</p>
-          <p style="color: #666;">This code expires in 10 minutes.</p>
+          <h2>Sign in to PLANET</h2>
+          <p>Click the button below to sign in. This link expires in 10 minutes.</p>
+          <a href="${magicLink}" style="display: inline-block; background: #0066CC; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; margin: 24px 0;">Sign in</a>
+          <p style="color: #666; font-size: 14px;">Or copy this link: ${magicLink}</p>
         </div>
       `,
     });
-    console.log("Email sent:", info.messageId);
 
-    return NextResponse.json({ token });
+    return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Send code error:", {
+    console.error("Send link error:", {
       message: error.message,
       code: error.code,
-      command: error.command,
-      responseCode: error.responseCode,
       response: error.response,
     });
     return NextResponse.json(
-      { error: `Failed to send code: ${error.message}` },
+      { error: `Failed to send link: ${error.message}` },
       { status: 500 }
     );
   }

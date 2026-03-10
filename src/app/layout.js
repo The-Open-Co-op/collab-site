@@ -1,5 +1,4 @@
 import { DM_Sans, Sawarabi_Mincho } from "next/font/google";
-import { AuthSessionProvider } from "@/components/session-provider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -25,7 +24,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${dmSans.variable} ${sawarabiMincho.variable} font-sans antialiased`}
       >
-        <AuthSessionProvider>{children}</AuthSessionProvider>
+        {children}
       </body>
     </html>
   );
