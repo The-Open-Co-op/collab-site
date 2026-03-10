@@ -85,14 +85,16 @@ export default function LoginPage() {
 
         {error && (
           <div className="mt-4 text-sm text-red-600">
-            <p>{error}</p>
-            {error.includes("not registered") && (
-              <a
-                href="https://opencollective.com/open-coop/contribute/free-member-98498/checkout?redirect=https://planet.open.coop/login"
-                className="inline-block mt-2 text-primary hover:underline font-medium"
-              >
-                Join for free →
-              </a>
+            {error === "not_a_member" ? (
+              <p>
+                This email address is not associated with a member &mdash; please{" "}
+                <a href="/#join" className="text-primary hover:underline font-medium">
+                  Join The Open Co-op
+                </a>
+                .
+              </p>
+            ) : (
+              <p>{error}</p>
             )}
           </div>
         )}

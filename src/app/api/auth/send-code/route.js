@@ -35,7 +35,7 @@ export async function POST(req) {
       const members = ocData?.data?.account?.members?.nodes;
       if (!members || members.length === 0) {
         return NextResponse.json(
-          { error: "This email is not registered as an Open Collective member. Join at opencollective.com/open-coop first." },
+          { error: "not_a_member" },
           { status: 403 }
         );
       }

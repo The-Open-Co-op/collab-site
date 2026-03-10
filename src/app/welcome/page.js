@@ -1,12 +1,28 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 export default function WelcomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Strip OC query params for a clean URL
+  useEffect(() => {
+    if (searchParams.toString()) {
+      router.replace("/welcome");
+    }
+  }, [searchParams, router]);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-md text-center">
+        <h1 className="font-display text-4xl font-bold mb-1">Welcome to</h1>
         <h1 className="font-display text-4xl font-bold mb-4">
-          Welcome to The Open Co-op
+          The Open Co-op
         </h1>
         <p className="text-lg text-foreground/70 mb-6">
-          You&apos;re in. Thank you for joining us.
+          Thank you for joining us.
         </p>
         <p className="text-foreground/60 mb-10">
           You can now sign in to the member dashboard to check out the latest
