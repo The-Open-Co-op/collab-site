@@ -3,14 +3,26 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
 async function findEmailByOrderId(orderIdV2) {
+  const headers = { "Content-Type": "application/json" };
+  if (process.env.OC_CLIENT_ID && process.env.OC_CLIENT_SECRET) {
+    headers["Client-Id"] = process.env.OC_CLIENT_ID;
+    headers["Client-Secret"] = process.env.OC_CLIENT_SECRET;
+  }
+  if (process.env.OPEN_COLLECTIVE_API_KEY) {
+    headers["Api-Key"] = process.env.OPEN_COLLECTIVE_API_KEY;
+  }
+
   const res = await fetch("https://api.opencollective.com/graphql/v2", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       query: `
         query($orderId: String!) {
-          order(order: { legacyId: $orderId }) {
-            fromAccount { emails }
+          order(order: { id: $orderId }) {
+            fromAccount {
+              emails
+              ... on Individual { email }
+            }
           }
         }
       `,
@@ -18,8 +30,9 @@ async function findEmailByOrderId(orderIdV2) {
     }),
   });
   const data = await res.json();
-  const emails = data?.data?.order?.fromAccount?.emails;
-  return emails?.[0] || null;
+  console.log("OC order lookup result:", JSON.stringify(data));
+  const account = data?.data?.order?.fromAccount;
+  return account?.email || account?.emails?.[0] || null;
 }
 
 async function checkNocoDB(email) {
