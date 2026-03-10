@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "@auth/core": "^0.41.0",
+    "@auth/unstorage-adapter": "^2.11.1",
+    "@vercel/kv": "^3.0.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "nodemailer": "^6.10.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "unstorage": "^1.17.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

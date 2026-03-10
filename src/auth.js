@@ -1,7 +1,18 @@
 import NextAuth from "next-auth";
 import Nodemailer from "next-auth/providers/nodemailer";
+import { UnstorageAdapter } from "@auth/unstorage-adapter";
+import { createStorage } from "unstorage";
+import vercelKVDriver from "unstorage/drivers/vercel-kv";
+
+const storage = createStorage({
+  driver: vercelKVDriver({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  }),
+});
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: UnstorageAdapter(storage),
   providers: [
     Nodemailer({
       server: {
@@ -21,7 +32,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn({ user }) {
-      // Verify membership against Open Collective
       if (!user.email) return false;
 
       try {
@@ -58,28 +68,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const data = await res.json();
         const members = data?.data?.account?.members?.nodes;
-
-        // Allow login even if not an OC member — we'll track membership status in session
         user.isMember = members && members.length > 0;
       } catch {
-        // If OC API fails, allow login but mark as unverified
         user.isMember = false;
       }
 
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.isMember = user.isMember ?? false;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.isMember = token.isMember ?? false;
+    async session({ session, user }) {
+      session.user.isMember = user.isMember ?? false;
       return session;
     },
-  },
-  session: {
-    strategy: "jwt",
   },
 });
