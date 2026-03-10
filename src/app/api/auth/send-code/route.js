@@ -24,7 +24,7 @@ export async function POST(req) {
     });
 
     await transporter.sendMail({
-      from: "PLANET <noreply@open.coop>",
+      from: "PLANET <info@open.coop>",
       to: email,
       subject: "Sign in to PLANET",
       text: `Click this link to sign in to PLANET:\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
