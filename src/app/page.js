@@ -1,6 +1,20 @@
-import Link from "next/link";
+import { getCollectiveStats, getGoals } from "@/lib/opencollective";
 
-export default function Home() {
+function formatCurrency(value, currency = "GBP") {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export default async function Home() {
+  const [stats, goals] = await Promise.all([
+    getCollectiveStats().catch(() => null),
+    getGoals().catch(() => []),
+  ]);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero */}
@@ -26,6 +40,19 @@ export default function Home() {
             Learn more
           </a>
         </div>
+        {stats && (
+          <div className="mt-12 flex gap-8 text-sm text-foreground/50">
+            <span>{stats.memberCount} members</span>
+            <span>&middot;</span>
+            <span>{formatCurrency(stats.totalRaised, stats.currency)} raised</span>
+            {goals.length > 0 && (
+              <>
+                <span>&middot;</span>
+                <span>{goals.length} features being funded</span>
+              </>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Vision */}
@@ -38,7 +65,8 @@ export default function Home() {
           the technology is to get you back offline, living your life.
         </p>
         <p className="mt-4 text-lg leading-relaxed text-foreground/80">
-          We&apos;re building this. The technology exists. The community is forming.{" "}
+          We&apos;re building this. The technology exists. The community is
+          forming.{" "}
           <a href="#join" className="text-primary hover:underline">
             Here&apos;s how you can be part of it.
           </a>
@@ -56,8 +84,8 @@ export default function Home() {
             client, and a set of apps built on open protocols owned by no one.
           </p>
           <p className="mt-4 text-lg leading-relaxed text-foreground/80">
-            Right now, we&apos;re designing the experience, building working demos,
-            and gathering the community that will bring this to life.
+            Right now, we&apos;re designing the experience, building working
+            demos, and gathering the community that will bring this to life.
           </p>
           <a
             href="https://docs.open.coop"
@@ -74,10 +102,78 @@ export default function Home() {
           <h2 className="font-display text-3xl font-bold mb-8">
             The Evidence
           </h2>
-          {/* TODO: Open Collective API integration for live stats and goals */}
-          <p className="text-lg text-foreground/70">
-            Live stats and feature bounty progress coming soon.
-          </p>
+
+          {/* Stats */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
+              <div className="rounded-xl border border-foreground/10 bg-white p-6">
+                <p className="font-display text-3xl font-bold text-primary">
+                  {stats.memberCount}
+                </p>
+                <p className="mt-1 text-sm text-foreground/60">Members</p>
+              </div>
+              <div className="rounded-xl border border-foreground/10 bg-white p-6">
+                <p className="font-display text-3xl font-bold text-primary">
+                  {formatCurrency(stats.totalRaised, stats.currency)}
+                </p>
+                <p className="mt-1 text-sm text-foreground/60">Total raised</p>
+              </div>
+              <div className="rounded-xl border border-foreground/10 bg-white p-6">
+                <p className="font-display text-3xl font-bold text-primary">
+                  80,000+
+                </p>
+                <p className="mt-1 text-sm text-foreground/60">
+                  <a
+                    href="https://cobot.open.coop"
+                    className="hover:text-primary"
+                  >
+                    Organisations mapped in the regenerative economy
+                  </a>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Goal progress bars */}
+          {goals.length > 0 && (
+            <div className="space-y-6">
+              <h3 className="font-display text-xl font-bold">
+                Feature bounties
+              </h3>
+              {goals.map((goal) => {
+                const pct = Math.min(
+                  100,
+                  Math.round((goal.raised / goal.target) * 100)
+                );
+                return (
+                  <div key={goal.slug || goal.name}>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="font-medium">{goal.name}</span>
+                      <span className="text-sm text-foreground/60">
+                        {formatCurrency(goal.raised, goal.currency)} /{" "}
+                        {formatCurrency(goal.target, goal.currency)}
+                        {" · "}
+                        {goal.contributors} backer
+                        {goal.contributors !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-foreground/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <a
+                href="https://opencollective.com/the-open-co-op"
+                className="inline-block mt-2 text-primary hover:underline font-medium"
+              >
+                Fund a feature &rarr;
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
@@ -113,10 +209,26 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Free", price: "£0/month", href: "https://opencollective.com/the-open-co-op" },
-              { label: "Supporter", price: "£5/month", href: "https://opencollective.com/the-open-co-op/contribute" },
-              { label: "Supporter+", price: "£10/month", href: "https://opencollective.com/the-open-co-op/contribute" },
-              { label: "Champion", price: "£50/month", href: "https://opencollective.com/the-open-co-op/contribute" },
+              {
+                label: "Free",
+                price: "£0/month",
+                href: "https://opencollective.com/the-open-co-op",
+              },
+              {
+                label: "Supporter",
+                price: "£5/month",
+                href: "https://opencollective.com/the-open-co-op/contribute",
+              },
+              {
+                label: "Supporter+",
+                price: "£10/month",
+                href: "https://opencollective.com/the-open-co-op/contribute",
+              },
+              {
+                label: "Champion",
+                price: "£50/month",
+                href: "https://opencollective.com/the-open-co-op/contribute",
+              },
             ].map((tier) => (
               <a
                 key={tier.label}
