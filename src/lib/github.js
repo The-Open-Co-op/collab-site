@@ -1,5 +1,5 @@
 const ORG = "The-Open-Co-op";
-const REPO = "planet";
+const REPO = "planet-site";
 
 function headers() {
   const h = { Accept: "application/vnd.github+json" };
