@@ -4,16 +4,16 @@ export async function POST(req) {
   try {
     const event = await req.json();
 
-    // OC sends collective.member.created when someone joins
-    if (event.type !== "collective.member.created") {
-      return NextResponse.json({ ok: true, skipped: true });
-    }
+    // Log full payload for debugging
+    console.log("OC webhook received:", JSON.stringify(event));
 
     const email = event.data?.member?.memberAccount?.email
       || event.data?.member?.account?.email
-      || event.data?.fromCollective?.email;
+      || event.data?.fromCollective?.email
+      || event.data?.email;
+
     if (!email) {
-      console.log("OC webhook: no email in payload", JSON.stringify(event.type));
+      console.log("OC webhook: no email found in payload");
       return NextResponse.json({ ok: true, skipped: true });
     }
 
@@ -32,8 +32,10 @@ export async function POST(req) {
     const { list } = await existing.json();
 
     if (!list || list.length === 0) {
-      // Create new member record
-      const tierName = event.data?.member?.tier?.name || event.data?.tier?.name || "free";
+      const tierName = event.data?.member?.tier?.name
+        || event.data?.tier?.name
+        || event.data?.order?.tier?.name
+        || "free";
       await fetch(
         "https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records",
         {

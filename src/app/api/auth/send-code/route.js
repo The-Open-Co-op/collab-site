@@ -9,39 +9,26 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
-    // Check OC membership before sending link
-    try {
-      const headers = { "Content-Type": "application/json" };
-      if (process.env.OPEN_COLLECTIVE_API_KEY) {
-        headers["Api-Key"] = process.env.OPEN_COLLECTIVE_API_KEY;
-      }
-      const ocRes = await fetch("https://api.opencollective.com/graphql/v2", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          query: `
-            query($slug: String!, $email: EmailAddress!) {
-              account(slug: $slug) {
-                members(email: $email, limit: 1) {
-                  nodes { role }
-                }
-              }
-            }
-          `,
-          variables: { slug: "open-coop", email },
-        }),
-      });
-      const ocData = await ocRes.json();
-      const members = ocData?.data?.account?.members?.nodes;
-      if (!members || members.length === 0) {
-        return NextResponse.json(
-          { error: "not_a_member" },
-          { status: 403 }
+    // Check membership via NocoDB
+    if (process.env.NOCODB_API_TOKEN) {
+      try {
+        const nocoRes = await fetch(
+          `https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records?where=(email,eq,${encodeURIComponent(email)})&limit=1`,
+          {
+            headers: { "xc-token": process.env.NOCODB_API_TOKEN },
+          }
         );
+        const { list } = await nocoRes.json();
+        if (!list || list.length === 0) {
+          return NextResponse.json(
+            { error: "not_a_member" },
+            { status: 403 }
+          );
+        }
+      } catch (err) {
+        console.error("NocoDB membership check failed:", err.message);
+        // Allow sign-in if check fails
       }
-    } catch (err) {
-      console.error("OC membership check failed:", err.message);
-      // Allow sign-in if OC check fails (don't block on API errors)
     }
 
     const token = generateToken(email);
