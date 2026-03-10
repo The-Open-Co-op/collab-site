@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function WelcomePage() {
+function WelcomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Strip OC query params for a clean URL
   useEffect(() => {
     if (searchParams.toString()) {
       router.replace("/welcome");
@@ -39,5 +38,13 @@ export default function WelcomePage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function WelcomePage() {
+  return (
+    <Suspense>
+      <WelcomeContent />
+    </Suspense>
   );
 }
