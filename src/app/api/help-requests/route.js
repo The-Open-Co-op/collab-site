@@ -43,14 +43,38 @@ export async function POST(req) {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const { data: requests } = await supabase
+  const { data: rows, error } = await supabase
     .from("help_requests")
-    .select("*, members(name), help_replies(*, members(name))")
+    .select("*, members(name)")
     .order("created_at", { ascending: false })
     .limit(20);
 
+  if (error) {
+    console.error("Help requests GET error:", error);
+    return NextResponse.json({ requests: [] });
+  }
+
+  // Fetch replies separately to avoid ambiguous nested members join
+  const ids = (rows || []).map((r) => r.id);
+  let repliesMap = {};
+  if (ids.length > 0) {
+    const { data: replies } = await supabase
+      .from("help_replies")
+      .select("*, members(name)")
+      .in("help_request_id", ids);
+    for (const reply of replies || []) {
+      if (!repliesMap[reply.help_request_id]) repliesMap[reply.help_request_id] = [];
+      repliesMap[reply.help_request_id].push(reply);
+    }
+  }
+
+  const requests = (rows || []).map((r) => ({
+    ...r,
+    help_replies: repliesMap[r.id] || [],
+  }));
+
   return NextResponse.json(
-    { requests: requests || [] },
+    { requests },
     { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
   );
 }

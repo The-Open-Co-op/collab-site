@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   }
 
   // Get recent feed items (task completions + contributions + help requests)
-  const [recentCompletions, recentContributions, helpRequests] =
+  const [recentCompletions, recentContributions, helpRequestsResult] =
     await Promise.all([
       supabase
         .from("task_completions")
@@ -60,11 +60,36 @@ export default async function DashboardPage() {
         .then((r) => r.data || []),
       supabase
         .from("help_requests")
-        .select("*, members(name), help_replies(*, members(name))")
+        .select("*, members(name)")
         .order("created_at", { ascending: false })
-        .limit(20)
-        .then((r) => r.data || []),
+        .limit(20),
     ]);
+
+  if (helpRequestsResult.error) {
+    console.error("Help requests query error:", helpRequestsResult.error);
+  }
+  const helpRequestRows = helpRequestsResult.data || [];
+
+  // Fetch replies separately to avoid ambiguous nested members join
+  const helpRequestIds = helpRequestRows.map((r) => r.id);
+  let helpRepliesMap = {};
+  if (helpRequestIds.length > 0) {
+    const { data: replies } = await supabase
+      .from("help_replies")
+      .select("*, members(name)")
+      .in("help_request_id", helpRequestIds);
+    for (const reply of replies || []) {
+      if (!helpRepliesMap[reply.help_request_id]) {
+        helpRepliesMap[reply.help_request_id] = [];
+      }
+      helpRepliesMap[reply.help_request_id].push(reply);
+    }
+  }
+
+  const helpRequests = helpRequestRows.map((r) => ({
+    ...r,
+    help_replies: helpRepliesMap[r.id] || [],
+  }));
 
   // Get member list for @mentions
   const { data: allMembers } = await supabase
@@ -126,6 +151,7 @@ export default async function DashboardPage() {
 
   return (
     <CollaborationStation
+      key={Date.now()}
       member={member}
       tasks={filteredTasks.slice(0, 5)}
       allTasks={filteredTasks}
