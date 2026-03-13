@@ -28,6 +28,7 @@ export async function POST(req) {
             .filter(Boolean);
     }
     if (data.time !== undefined) updates.time_commitment = data.time;
+    if (data.time_commitment !== undefined) updates.time_commitment = data.time_commitment;
     if (data.name !== undefined) updates.name = data.name;
     if (data.bio !== undefined) updates.bio = data.bio;
     if (data.phone !== undefined) updates.phone = data.phone;
