@@ -310,9 +310,7 @@ export default function CollaborationStation({
   const [feedFilter, setFeedFilter] = useState("all");
   const [helpRequests, setHelpRequests] = useState(initialHelpRequests);
   const [newItemIds, setNewItemIds] = useState(new Set());
-
-  // Build feed from completions + contributions
-  const feed = [
+  const [feedItems, setFeedItems] = useState([
     ...recentCompletions.map((c) => ({
       id: `comp-${c.id}`,
       type: "completion",
@@ -329,8 +327,9 @@ export default function CollaborationStation({
       memberId: c.member_id,
       date: c.created_at,
     })),
-  ]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  ].sort((a, b) => new Date(b.date) - new Date(a.date)));
+
+  const feed = feedItems
     .filter(
       (item) =>
         feedFilter === "all" ||
@@ -388,6 +387,21 @@ export default function CollaborationStation({
 
       setCompletedIds((prev) => new Set([...prev, task.id]));
 
+      // Optimistic feed update
+      const tempId = `comp-temp-${Date.now()}`;
+      setFeedItems((prev) => [
+        {
+          id: tempId,
+          type: "completion",
+          text: task.title,
+          memberName: member?.name || firstName,
+          memberId: member?.id,
+          date: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+      setNewItemIds((prev) => new Set([...prev, tempId]));
+
       await fetch("/api/tasks/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -423,6 +437,19 @@ export default function CollaborationStation({
 
   // Contribution submit handler
   async function handleContribution(text, mentionedIds) {
+    // Optimistic update — show immediately
+    const tempId = `contrib-temp-${Date.now()}`;
+    const newItem = {
+      id: tempId,
+      type: "contribution",
+      text,
+      memberName: member?.name || firstName,
+      memberId: member?.id,
+      date: new Date().toISOString(),
+    };
+    setFeedItems((prev) => [newItem, ...prev]);
+    setNewItemIds((prev) => new Set([...prev, tempId]));
+
     await fetch("/api/contributions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -432,6 +459,18 @@ export default function CollaborationStation({
 
   // Help request submit handler
   async function handleHelpRequest(text) {
+    // Optimistic update
+    const tempRequest = {
+      id: `temp-${Date.now()}`,
+      member_id: member?.id,
+      description: text,
+      is_resolved: false,
+      members: { name: member?.name || firstName },
+      help_replies: [],
+      created_at: new Date().toISOString(),
+    };
+    setHelpRequests((prev) => [tempRequest, ...prev]);
+
     await fetch("/api/help-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

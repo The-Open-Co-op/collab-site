@@ -51,6 +51,7 @@ export async function POST(req) {
 
     await transporter.sendMail({
       from: "Collab <info@open.coop>",
+      ...(email && { replyTo: email }),
       to: "info@open.coop",
       subject: `Collab feedback${category ? ` [${category}]` : ""}`,
       text: `From: ${email || "anonymous"}\nCategory: ${category || "none"}\n\n${message}`,
