@@ -105,7 +105,7 @@ function WelcomeContent() {
             we&rsquo;re really happy to have you on board.
           </p>
           <button
-            onClick={() => router.push("/home/get-started")}
+            onClick={() => router.push("/get-started")}
             className="rounded-lg bg-primary px-8 py-4 text-white text-lg font-medium hover:bg-primary-dark transition-colors"
           >
             Let&rsquo;s get you set up &rarr;
