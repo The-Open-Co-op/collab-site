@@ -49,5 +49,8 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  return NextResponse.json({ requests: requests || [] });
+  return NextResponse.json(
+    { requests: requests || [] },
+    { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } }
+  );
 }

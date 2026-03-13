@@ -35,45 +35,27 @@ function MemberLink({ name, memberId }) {
 }
 
 // ─── Task Item ──────────────────────────────────────────────
-function TaskItem({ task, onComplete, onUndo, isCompleted, isPersistent }) {
+function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
   const [completing, setCompleting] = useState(false);
   const [checked, setChecked] = useState(isCompleted);
-  const [showUndo, setShowUndo] = useState(false);
-  const [sliding, setSliding] = useState(false);
-  const undoTimer = useRef(null);
 
   async function handleCheck() {
-    if (completing || showUndo) return;
+    if (completing) return;
     setCompleting(true);
     setChecked(true);
     await onComplete(task);
     setCompleting(false);
-
-    if (!isPersistent) {
-      setShowUndo(true);
-      undoTimer.current = setTimeout(() => {
-        setShowUndo(false);
-        setSliding(true);
-      }, 4000);
-    }
-  }
-
-  function handleUndo() {
-    if (undoTimer.current) clearTimeout(undoTimer.current);
-    setShowUndo(false);
-    setChecked(false);
-    onUndo(task);
   }
 
   return (
     <div
       className={`group flex items-start gap-3 rounded-xl border border-foreground/10 bg-white p-4 transition-all duration-500 ${
-        sliding ? "opacity-0 translate-x-full" : ""
+        checked && !isPersistent ? "opacity-0 translate-x-full" : ""
       }`}
     >
       <button
         onClick={handleCheck}
-        disabled={completing || checked}
+        disabled={completing || (checked && !isPersistent)}
         className={`mt-0.5 w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all duration-300 ${
           checked
             ? "bg-primary border-primary"
@@ -109,20 +91,12 @@ function TaskItem({ task, onComplete, onUndo, isCompleted, isPersistent }) {
         ) : (
           <span className="font-display font-bold text-sm">{task.title}</span>
         )}
-        {task.description && !showUndo && (
+        {task.description && (
           <p className="text-xs text-foreground/50 mt-0.5 line-clamp-1">
             {task.description}
           </p>
         )}
-        {showUndo && (
-          <button
-            onClick={handleUndo}
-            className="text-xs text-primary hover:underline mt-0.5"
-          >
-            Undo
-          </button>
-        )}
-        {task.source === "github" && !showUndo && (
+        {task.source === "github" && (
           <span className="inline-block mt-1 text-[10px] bg-foreground/5 text-foreground/40 rounded px-1.5 py-0.5">
             GitHub
           </span>
@@ -133,7 +107,7 @@ function TaskItem({ task, onComplete, onUndo, isCompleted, isPersistent }) {
 }
 
 // ─── Feed Item ──────────────────────────────────────────────
-function FeedItem({ item, isNew }) {
+function FeedItem({ item, isNew, isOwn, onUndo }) {
   return (
     <div
       className={`rounded-xl border border-foreground/10 bg-white p-4 transition-all duration-500 ${
@@ -159,9 +133,19 @@ function FeedItem({ item, isNew }) {
               <span className="text-foreground/70">{item.text}</span>
             )}
           </p>
-          <p className="text-xs text-foreground/40 mt-1">
-            {timeAgo(item.date)}
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-xs text-foreground/40">
+              {timeAgo(item.date)}
+            </p>
+            {isOwn && onUndo && (
+              <button
+                onClick={() => onUndo(item)}
+                className="text-xs text-foreground/30 hover:text-primary transition-colors"
+              >
+                Undo
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -354,6 +338,7 @@ export default function CollaborationStation({
       id: `comp-${c.id}`,
       type: "completion",
       text: c.tasks?.title || "a task",
+      taskId: c.task_id,
       memberName: c.members?.name,
       memberId: c.member_id,
       date: c.completed_at,
@@ -372,7 +357,7 @@ export default function CollaborationStation({
 
   // Fetch help requests client-side to avoid server caching issues
   useEffect(() => {
-    fetch("/api/help-requests")
+    fetch(`/api/help-requests?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((data) => {
         if (data.requests) setHelpRequests(data.requests);
@@ -462,6 +447,7 @@ export default function CollaborationStation({
           id: tempId,
           type: "completion",
           text: task.title,
+          taskId: task.id,
           memberName: member?.name || firstName,
           memberId: member?.id,
           date: new Date().toISOString(),
@@ -478,33 +464,47 @@ export default function CollaborationStation({
 
       if (task.is_persistent) return;
 
-      // Task slides away after undo window (4.5s total)
-      setTimeout(() => removeTask(task.id), 4500);
+      // Remove completed task and replace with next
+      setTimeout(() => removeTask(task.id), 500);
     },
     [member, removeTask]
   );
 
-  // Task undo handler
-  const handleTaskUndo = useCallback(
-    async (task) => {
-      setCompletedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(task.id);
-        return next;
-      });
+  // Undo a feed item (completion or contribution)
+  const handleFeedUndo = useCallback(
+    async (item) => {
+      // Remove from feed
+      setFeedItems((prev) => prev.filter((f) => f.id !== item.id));
 
-      // Remove the completion feed item
-      setFeedItems((prev) =>
-        prev.filter((item) => !(item.type === "completion" && item.text === task.title && item.id.startsWith("comp-temp-")))
-      );
-
-      await fetch("/api/tasks/complete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: task.id }),
-      });
+      if (item.type === "completion" && item.taskId) {
+        // Restore the task to the todo list
+        setCompletedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(item.taskId);
+          return next;
+        });
+        const restoredTask = allTasks.find((t) => t.id === item.taskId);
+        if (restoredTask) {
+          setTasks((prev) =>
+            prev.some((t) => t.id === restoredTask.id) ? prev : [restoredTask, ...prev].slice(0, 5)
+          );
+        }
+        await fetch("/api/tasks/complete", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskId: item.taskId }),
+        });
+      } else if (item.type === "contribution") {
+        // Extract numeric DB id from "contrib-123" or "contrib-temp-..."
+        const dbId = item.id.replace("contrib-", "").replace("temp-", "");
+        await fetch("/api/contributions", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: dbId, description: item.text }),
+        });
+      }
     },
-    []
+    [allTasks]
   );
 
   // Contribution submit handler
@@ -604,7 +604,6 @@ export default function CollaborationStation({
                   key={task.id}
                   task={task}
                   onComplete={handleTaskComplete}
-                  onUndo={handleTaskUndo}
                   isCompleted={completedIds.has(task.id)}
                   isPersistent={task.is_persistent}
                 />
@@ -678,6 +677,8 @@ export default function CollaborationStation({
                   key={item.id}
                   item={item}
                   isNew={newItemIds.has(item.id)}
+                  isOwn={item.memberId === member?.id}
+                  onUndo={handleFeedUndo}
                 />
               ))
             ) : (
