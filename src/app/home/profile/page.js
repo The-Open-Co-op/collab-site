@@ -82,7 +82,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="max-w-xl">
+      <div className="max-w-xl w-full">
         <h1 className="font-display text-3xl font-bold mb-8">My Profile</h1>
         <p className="text-foreground/50">Loading...</p>
       </div>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="max-w-xl">
+      <div className="max-w-xl w-full">
         <h1 className="font-display text-3xl font-bold mb-8">My Profile</h1>
         <p className="text-foreground/50">Could not load profile.</p>
       </div>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-xl w-full">
       <h1 className="font-display text-3xl font-bold mb-8">My Profile</h1>
 
       <div className="space-y-6">
@@ -272,7 +272,7 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
             <input
               type="text"
               placeholder="Label (e.g. Twitter)"
@@ -280,7 +280,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setNewLink((l) => ({ ...l, label: e.target.value }))
               }
-              className="flex-1 rounded-lg border border-foreground/20 bg-white px-3 py-2 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-foreground/20 bg-white px-3 py-2 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
             />
             <input
               type="url"
@@ -289,7 +289,7 @@ export default function ProfilePage() {
               onChange={(e) =>
                 setNewLink((l) => ({ ...l, url: e.target.value }))
               }
-              className="flex-1 rounded-lg border border-foreground/20 bg-white px-3 py-2 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+              className="w-full rounded-lg border border-foreground/20 bg-white px-3 py-2 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
             />
             <button
               onClick={addLink}
