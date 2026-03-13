@@ -48,7 +48,7 @@ export default async function DashboardPage() {
     await Promise.all([
       supabase
         .from("task_completions")
-        .select("*, members(name), tasks(title)")
+        .select("*, members(name), tasks(*)")
         .order("completed_at", { ascending: false })
         .limit(20)
         .then((r) => r.data || []),
@@ -106,6 +106,13 @@ export default async function DashboardPage() {
       if (newTask) tasks.push(newTask);
     }
   }
+
+  // One-time: set handbook URL on existing task
+  await supabase
+    .from("tasks")
+    .update({ url: "/The-Open-Co-op-Group-Handbook.pdf" })
+    .eq("title", "Download and read the Member Handbook")
+    .is("url", null);
 
   // Filter tasks for this member
   const memberInterests = member?.interests || [];

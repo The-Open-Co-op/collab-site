@@ -114,7 +114,7 @@ create trigger members_updated_at
 -- Seed universal tasks
 insert into tasks (title, description, url, category, is_universal, is_persistent, sort_order) values
   ('Join The Open Co-op Signal group', null, 'https://signal.group/#CjQKIJwCI3LV2CPO8ghXXLwZtUvnp5M8yD08ELtXdkRIWOAEEhC78Ge_s-QrxzdY9AptQCJg', 'universal', true, false, 1),
-  ('Download and read the Member Handbook', null, null, 'universal', true, false, 2),
+  ('Download and read the Member Handbook', null, '/The-Open-Co-op-Group-Handbook.pdf', 'universal', true, false, 2),
   ('Familiarise yourself with the Docs', null, 'https://docs.open.coop/', 'universal', true, false, 3),
   ('Check out the latest posts on the Blog', null, 'https://open.coop/blog/', 'universal', true, false, 4),
   ('Check out our Google Docs for more background', null, 'https://drive.google.com/drive/folders/0B5qDh_FMmLtONEFsYWc3Ql9YUWc?resourcekey=0-halS3Ugoii3XhLi8SNrSWQ&usp=sharing', 'universal', true, false, 5),

@@ -79,18 +79,22 @@ function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
         )}
       </button>
       <div className="flex-1 min-w-0">
-        {task.url ? (
-          <a
-            href={task.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-display font-bold text-sm hover:text-primary transition-colors"
-          >
-            {task.title}
-          </a>
-        ) : (
-          <span className="font-display font-bold text-sm">{task.title}</span>
-        )}
+        <span className="font-display font-bold text-sm">
+          {task.title}
+          {task.url && (
+            <a
+              href={task.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center ml-1.5 text-foreground/30 hover:text-primary transition-colors align-middle"
+              title={task.url}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </a>
+          )}
+        </span>
         {task.description && (
           <p className="text-xs text-foreground/50 mt-0.5 line-clamp-1">
             {task.description}
@@ -350,7 +354,7 @@ export default function CollaborationStation({
       type: "completion",
       text: c.tasks?.title || "a task",
       taskId: c.task_id,
-      taskObj: allTasks.find((t) => t.id === c.task_id) || null,
+      taskObj: c.tasks || null,
       memberName: c.members?.name,
       memberId: c.member_id,
       date: c.completed_at,
@@ -592,6 +596,9 @@ export default function CollaborationStation({
   const activeMembers = new Set(
     weekItems.map((item) => item.memberId).filter(Boolean)
   ).size;
+  const weekHelpRequests = helpRequests.filter(
+    (r) => r.created_at > weekAgo
+  ).length;
 
   return (
     <div className="lg:h-[calc(100vh-80px)] lg:flex lg:flex-col">
@@ -628,45 +635,7 @@ export default function CollaborationStation({
             )}
           </div>
 
-          {/* What's being funded */}
-          {goals.length > 0 && (
-            <div className="mt-8">
-              <h3 className="font-display text-sm font-bold mb-3 text-foreground/60">
-                What&rsquo;s being funded
-              </h3>
-              <div className="space-y-3">
-                {goals.map((goal) => {
-                  const pct = Math.min(
-                    100,
-                    Math.round((goal.raised / goal.target) * 100)
-                  );
-                  return (
-                    <a
-                      key={goal.slug || goal.name}
-                      href={`https://opencollective.com/open-coop/projects/${goal.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-xl border border-foreground/10 bg-white p-3 hover:border-foreground/20 transition-colors"
-                    >
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="font-medium">{goal.name}</span>
-                        <span className="text-foreground/40">
-                          {formatCurrency(goal.raised, goal.currency)} /{" "}
-                          {formatCurrency(goal.target, goal.currency)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* What's being funded — hidden for now, will add back later */}
         </div>
 
         {/* Middle: Things We've Done */}
@@ -742,6 +711,11 @@ export default function CollaborationStation({
         </span>
         <span className="text-foreground/20">&middot;</span>
         <span>
+          <strong className="text-foreground">{weekHelpRequests}</strong> help
+          request{weekHelpRequests !== 1 ? "s" : ""} this week
+        </span>
+        <span className="text-foreground/20">&middot;</span>
+        <span>
           <strong className="text-foreground">{activeMembers}</strong> active
           member{activeMembers !== 1 ? "s" : ""}
         </span>
@@ -750,6 +724,7 @@ export default function CollaborationStation({
       {/* Quick links */}
       <div className="mt-2 shrink-0 flex flex-wrap justify-center gap-4 text-sm">
         {[
+          { label: "Member Handbook", href: "/The-Open-Co-op-Group-Handbook.pdf" },
           { label: "Docs", href: "https://docs.open.coop" },
           {
             label: "GitHub",
