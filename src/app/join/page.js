@@ -44,6 +44,8 @@ export default function JoinPage() {
         </h1>
         <p className="mt-3 text-foreground/70 leading-relaxed">
           We&rsquo;re working to catalyse the collaborative, regenerative economy.
+        </p>
+        <p className="mt-2 text-foreground/70 leading-relaxed">
           Our mission is to co-create PLANET — a member-owned co-operating system
           to support collaboration at scale.
         </p>
