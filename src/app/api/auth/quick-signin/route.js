@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import { supabase } from "@/lib/supabase";
 
 async function findAccountByOrderId(orderIdV2, legacyOrderId) {
   const headers = { "Content-Type": "application/json" };
@@ -12,7 +13,6 @@ async function findAccountByOrderId(orderIdV2, legacyOrderId) {
     headers["Api-Key"] = process.env.OPEN_COLLECTIVE_API_KEY;
   }
 
-  // Try v2 ID first, then legacy numeric ID
   const orderRef = orderIdV2
     ? `{ id: "${orderIdV2}" }`
     : `{ legacyId: ${legacyOrderId} }`;
@@ -29,28 +29,22 @@ async function findAccountByOrderId(orderIdV2, legacyOrderId) {
             emails
             ... on Individual { email }
           }
+          tier {
+            name
+          }
         }
       }`,
     }),
   });
   const data = await res.json();
   console.log("OC order lookup:", JSON.stringify(data));
-  const account = data?.data?.order?.fromAccount;
+  const order = data?.data?.order;
+  const account = order?.fromAccount;
   const email = account?.email || account?.emails?.[0] || null;
   const name = account?.name || null;
-  return { email, name };
-}
-
-async function checkNocoDB(email) {
-  if (!process.env.NOCODB_API_TOKEN) return false;
-  const res = await fetch(
-    `https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records?where=(email,eq,${encodeURIComponent(email)})&limit=1`,
-    {
-      headers: { "xc-token": process.env.NOCODB_API_TOKEN },
-    }
-  );
-  const { list } = await res.json();
-  return list && list.length > 0;
+  const slug = account?.slug || null;
+  const tier = order?.tier?.name || null;
+  return { email, name, slug, tier };
 }
 
 function createSession(email, name) {
@@ -59,18 +53,36 @@ function createSession(email, name) {
   return jwt.sign(payload, process.env.NEXTAUTH_SECRET, { expiresIn: "30d" });
 }
 
+async function ensureMember(email, name, ocSlug, ocTier) {
+  const { data: existing } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", email)
+    .limit(1)
+    .single();
+
+  if (existing) return existing.id;
+
+  const { data: created } = await supabase
+    .from("members")
+    .insert({ email, name, oc_slug: ocSlug, oc_tier: ocTier })
+    .select("id")
+    .single();
+
+  return created?.id;
+}
+
 export async function POST(req) {
   try {
     const body = await req.json();
     const { email, orderIdV2, legacyOrderId } = body;
 
     // Try order-based sign-in first
-    let ocName = null;
     if (orderIdV2 || legacyOrderId) {
       const account = await findAccountByOrderId(orderIdV2, legacyOrderId);
       if (account.email) {
-        ocName = account.name;
-        const sessionToken = createSession(account.email, ocName);
+        await ensureMember(account.email, account.name, account.slug, account.tier);
+        const sessionToken = createSession(account.email, account.name);
         const cookieStore = await cookies();
         cookieStore.set("session-token", sessionToken, {
           httpOnly: true,
@@ -79,7 +91,7 @@ export async function POST(req) {
           maxAge: 30 * 24 * 60 * 60,
           path: "/",
         });
-        return NextResponse.json({ ok: true, name: ocName });
+        return NextResponse.json({ ok: true, name: account.name });
       }
       console.log("OC order lookup returned no email for", orderIdV2 || legacyOrderId);
     }
@@ -89,31 +101,24 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
-    // If they came from OC (have order params), trust the email and ensure NocoDB record
     const fromOC = !!(orderIdV2 || legacyOrderId);
-    const exists = await checkNocoDB(email);
 
-    if (!exists && !fromOC) {
+    const { data: member } = await supabase
+      .from("members")
+      .select("id, name")
+      .eq("email", email)
+      .limit(1)
+      .single();
+
+    if (!member && !fromOC) {
       return NextResponse.json({ error: "not_a_member" }, { status: 403 });
     }
 
-    if (!exists && fromOC && process.env.NOCODB_API_TOKEN) {
-      // Create NocoDB record for new OC member
-      await fetch(
-        "https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "xc-token": process.env.NOCODB_API_TOKEN,
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
-      console.log("Created NocoDB record for new OC member:", email);
+    if (!member && fromOC) {
+      await ensureMember(email, null, null, null);
     }
 
-    const sessionToken = createSession(email);
+    const sessionToken = createSession(email, member?.name);
     const cookieStore = await cookies();
     cookieStore.set("session-token", sessionToken, {
       httpOnly: true,
@@ -123,7 +128,7 @@ export async function POST(req) {
       path: "/",
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, name: member?.name });
   } catch (error) {
     console.error("Quick sign-in error:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

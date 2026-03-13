@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { generateToken } from "@/lib/otp";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req) {
   try {
@@ -9,30 +10,28 @@ export async function POST(req) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
-    // Check membership via NocoDB
-    if (process.env.NOCODB_API_TOKEN) {
-      try {
-        const nocoRes = await fetch(
-          `https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records?where=(email,eq,${encodeURIComponent(email)})&limit=1`,
-          {
-            headers: { "xc-token": process.env.NOCODB_API_TOKEN },
-          }
+    // Check membership via Supabase
+    try {
+      const { data: member } = await supabase
+        .from("members")
+        .select("id")
+        .eq("email", email)
+        .limit(1)
+        .single();
+
+      if (!member) {
+        return NextResponse.json(
+          { error: "not_a_member" },
+          { status: 403 }
         );
-        const { list } = await nocoRes.json();
-        if (!list || list.length === 0) {
-          return NextResponse.json(
-            { error: "not_a_member" },
-            { status: 403 }
-          );
-        }
-      } catch (err) {
-        console.error("NocoDB membership check failed:", err.message);
-        // Allow sign-in if check fails
       }
+    } catch (err) {
+      console.error("Membership check failed:", err.message);
+      // Allow sign-in if check fails
     }
 
     const token = generateToken(email);
-    const baseUrl = process.env.NEXTAUTH_URL || "https://planet.open.coop";
+    const baseUrl = process.env.NEXTAUTH_URL || "https://collab.open.coop";
     const magicLink = `${baseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
 
     const transporter = nodemailer.createTransport({
@@ -46,13 +45,13 @@ export async function POST(req) {
     });
 
     await transporter.sendMail({
-      from: "PLANET <info@open.coop>",
+      from: "Collab <info@open.coop>",
       to: email,
-      subject: "Sign in to The Open Co-op",
-      text: `Sign in to The Open Co-op\n\nClick the link below to sign in.\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
+      subject: "Sign in to Collab — The Open Co-op",
+      text: `Sign in to Collab\n\nClick the link below to sign in.\n\n${magicLink}\n\nThis link expires in 10 minutes.`,
       html: `
         <div style="font-family: sans-serif; max-width: 400px;">
-          <p style="font-size: 14px; color: #333; margin: 0 0 16px 0;">Sign in to The Open Co-op</p>
+          <p style="font-size: 14px; color: #333; margin: 0 0 16px 0;">Sign in to Collab — The Open Co-op</p>
           <p style="font-size: 13px; color: #666; margin: 0 0 24px 0;">Click the button below to sign in.</p>
           <a href="${magicLink}" style="display: inline-block; background: #0066CC; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign in</a>
           <p style="font-size: 11px; color: #999; margin: 24px 0 0 0;">This link expires in 10 minutes.</p>

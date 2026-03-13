@@ -6,15 +6,9 @@ import { SignOutButton } from "@/components/sign-out-button";
 const navItems = [
   { href: "/home", label: "Home" },
   { href: "/home/get-started", label: "Get Started" },
-  { href: "/home/activity", label: "What's Happening" },
-  { href: "/home/showcase", label: "Showcase" },
-  {
-    href: "https://www.loomio.com/the-open-co-op",
-    label: "Governance",
-    external: true,
-  },
   { href: "/home/members", label: "Members" },
   { href: "/home/profile", label: "My Profile" },
+  { href: "/home/feedback", label: "Feedback" },
 ];
 
 export default async function HomeLayout({ children }) {
@@ -26,7 +20,7 @@ export default async function HomeLayout({ children }) {
       {/* Sidebar */}
       <aside className="w-64 shrink-0 border-r border-foreground/10 bg-white p-6 hidden md:block">
         <Link href="/" className="font-display text-xl font-bold block mb-8">
-          PLANET
+          Collab <span className="text-foreground/40 font-normal text-sm">The Open Co-op</span>
         </Link>
         <nav className="space-y-1">
           {navItems.map((item) => (

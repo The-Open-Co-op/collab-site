@@ -1,347 +1,442 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 const interestOptions = [
-  "Building the apps (design, code, prototyping)",
-  "Writing and communication (docs, blog posts, outreach)",
-  "Community organising (recruiting communities, onboarding)",
-  "Governance (shaping how the co-op works)",
-  "Business and strategy (funding, partnerships, sustainability)",
-  "I just want to follow along for now",
+  {
+    label: "Product",
+    description: "Designing and building the apps (design, code, prototyping)",
+    value: "product",
+  },
+  {
+    label: "Outreach",
+    description:
+      "Connecting with communities that could benefit from PLANET and recruiting recognisable names and movement leaders",
+    value: "outreach",
+  },
+  {
+    label: "Governance",
+    description:
+      "Evolving The Open Co-op\u2019s structure as membership grows",
+    value: "governance",
+  },
+  {
+    label: "Business & Strategy",
+    description: "Funding, partnerships, sustainability",
+    value: "business",
+  },
+  {
+    label: "Just following along",
+    description: "I want to stay informed for now",
+    value: "following",
+  },
 ];
 
 const timeOptions = [
-  "A few hours a month",
-  "A few hours a week",
-  "I want to be deeply involved",
-  "Just keep me informed",
+  { label: "A few hours a month", value: "hours_month" },
+  { label: "A few hours a week", value: "hours_week" },
+  { label: "I want to be deeply involved", value: "deeply_involved" },
+  { label: "Just keep me informed", value: "keep_informed" },
 ];
 
 const skillSuggestions = [
-  "development", "design", "UX", "writing", "marketing",
-  "community organising", "project management", "legal",
-  "finance", "translation", "testing",
+  "development",
+  "design",
+  "UX",
+  "writing",
+  "marketing",
+  "community organising",
+  "project management",
+  "legal",
+  "finance",
+  "translation",
+  "testing",
 ];
 
-function nextSteps(interests) {
-  const steps = [];
+const TOTAL_SLIDES = 4;
 
-  if (interests.includes("Building the apps (design, code, prototyping)")) {
-    steps.push({ text: "Browse open issues", href: "https://github.com/The-Open-Co-op/planet/issues" });
-    steps.push({ text: "Read the app specs", href: "https://docs.open.coop/planet/technology" });
-  }
-  if (interests.includes("Writing and communication (docs, blog posts, outreach)")) {
-    steps.push({ text: "Pick a docs page that needs writing", href: "https://docs.open.coop/contributing" });
-  }
-  if (interests.includes("Community organising (recruiting communities, onboarding)")) {
-    steps.push({ text: "Read about founding communities", href: "https://docs.open.coop/planet/how-it-works" });
-    steps.push({ text: "Share planet.open.coop with a community you're part of", href: "https://planet.open.coop" });
-  }
-  if (interests.includes("Governance (shaping how the co-op works)")) {
-    steps.push({ text: "View active proposals on Loomio", href: "https://www.loomio.com/the-open-co-op" });
-  }
-  if (interests.includes("Business and strategy (funding, partnerships, sustainability)")) {
-    steps.push({ text: "Read the roadmap", href: "https://docs.open.coop/planet/roadmap" });
-    steps.push({ text: "View finances on Open Collective", href: "https://opencollective.com/open-coop" });
-  }
-  if (interests.includes("I just want to follow along for now")) {
-    steps.push({ text: "You're all set — we'll keep you updated. Check back anytime.", href: null });
-  }
+function saveToProfile(data) {
+  return fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).catch(() => {});
+}
 
-  if (steps.length === 0) {
-    steps.push({ text: "Check the dashboard for what needs help", href: "/home" });
-  }
+function ProgressBar({ current, total }) {
+  return (
+    <div className="flex gap-2 justify-center mb-12">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-1.5 rounded-full transition-all duration-500 ${
+            i <= current
+              ? "w-10 bg-primary"
+              : "w-6 bg-foreground/15"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
-  return steps;
+function SlideWrapper({ children, visible }) {
+  return (
+    <div
+      className={`transition-all duration-500 ease-out ${
+        visible
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-4 pointer-events-none absolute inset-0"
+      }`}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function GetStartedPage() {
-  const [step, setStep] = useState(1);
+  const router = useRouter();
+  const [slide, setSlide] = useState(0);
   const [interests, setInterests] = useState([]);
-  const [skills, setSkills] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState("");
   const [time, setTime] = useState("");
-  const [contact, setContact] = useState({
-    method: "email",
-    signal: "",
-    googleDocs: false,
-    googleEmail: "",
-    listedOnMembers: false,
-  });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [showContactDetails, setShowContactDetails] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
 
-  function toggleInterest(option) {
+  function toggleInterest(value) {
     setInterests((prev) =>
-      prev.includes(option)
-        ? prev.filter((i) => i !== option)
-        : [...prev, option]
+      prev.includes(value) ? prev.filter((i) => i !== value) : [...prev, value]
     );
+  }
+
+  function addSkill(tag) {
+    if (!skills.includes(tag)) {
+      setSkills((prev) => [...prev, tag]);
+    }
+  }
+
+  function removeSkill(tag) {
+    setSkills((prev) => prev.filter((s) => s !== tag));
+  }
+
+  const goNext = useCallback(
+    async (saveData) => {
+      if (saveData) {
+        saveToProfile(saveData);
+      }
+      if (slide < TOTAL_SLIDES - 1) {
+        setSlide((s) => s + 1);
+      }
+    },
+    [slide]
+  );
+
+  const goBack = useCallback(() => {
+    if (slide > 0) setSlide((s) => s - 1);
+  }, [slide]);
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatarPreview(ev.target.result);
+    reader.readAsDataURL(file);
+
+    // Upload
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        saveToProfile({ avatar_url: data.url });
+      }
+    } catch {
+      // Non-critical
+    }
+    setAvatarUploading(false);
   }
 
   async function handleFinish() {
     setSaving(true);
-    try {
-      await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interests, skills, time, contact }),
-      });
-    } catch {
-      // Save failed — continue anyway, data is not critical
-    }
+    await saveToProfile({
+      show_contact_details: showContactDetails,
+      onboarding_completed: true,
+    });
     setSaving(false);
-    setDone(true);
-  }
-
-  if (done) {
-    const steps = nextSteps(interests);
-    return (
-      <div className="max-w-xl">
-        <h1 className="font-display text-3xl font-bold mb-6">Your next steps</h1>
-        <ul className="space-y-3">
-          {steps.map((s, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <span className="text-primary mt-0.5">→</span>
-              {s.href ? (
-                <a
-                  href={s.href}
-                  target={s.href.startsWith("http") ? "_blank" : undefined}
-                  rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                  className="text-primary hover:underline"
-                >
-                  {s.text}
-                </a>
-              ) : (
-                <span className="text-foreground/70">{s.text}</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
+    router.push("/home");
   }
 
   return (
-    <div className="max-w-xl">
-      <h1 className="font-display text-3xl font-bold mb-8">Get Started</h1>
+    <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-lg">
+        <ProgressBar current={slide} total={TOTAL_SLIDES} />
 
-      {step === 1 && (
-        <div>
-          <h2 className="font-display text-lg font-bold mb-4">
-            What interests you most?
-          </h2>
-          <div className="space-y-2">
-            {interestOptions.map((option) => (
+        <div className="relative min-h-[400px]">
+          {/* Slide 0: Interests */}
+          <SlideWrapper visible={slide === 0}>
+            <h1 className="font-display text-3xl font-bold mb-2 text-center">
+              What interests you most?
+            </h1>
+            <p className="text-foreground/50 text-center mb-8">
+              Choose as many as you like. This helps us show you relevant tasks.
+            </p>
+            <div className="space-y-3">
+              {interestOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => toggleInterest(option.value)}
+                  className={`block w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                    interests.includes(option.value)
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-foreground/10 bg-white hover:border-foreground/20"
+                  }`}
+                >
+                  <span className="font-display font-bold text-sm">
+                    {option.label}
+                  </span>
+                  <span className="block text-xs text-foreground/50 mt-0.5">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end mt-8">
               <button
-                key={option}
-                onClick={() => toggleInterest(option)}
-                className={`block w-full text-left rounded-lg border p-3 text-sm transition-colors ${
-                  interests.includes(option)
-                    ? "border-primary bg-primary/5"
-                    : "border-foreground/10 bg-white hover:border-foreground/20"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setStep(2)}
-            disabled={interests.length === 0}
-            className="mt-6 rounded-lg bg-primary px-6 py-2 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          <h2 className="font-display text-lg font-bold mb-4">
-            What skills can you offer?
-          </h2>
-          <textarea
-            placeholder="e.g. React, UX design, copywriting..."
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
-            className="w-full rounded-lg border border-foreground/20 bg-white px-4 py-3 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none resize-none h-24"
-          />
-          <div className="flex flex-wrap gap-2 mt-3">
-            {skillSuggestions.map((tag) => (
-              <button
-                key={tag}
                 onClick={() =>
-                  setSkills((prev) =>
-                    prev ? `${prev}, ${tag}` : tag
-                  )
+                  goNext({ interests })
                 }
-                className="rounded-full border border-foreground/10 px-3 py-1 text-xs hover:border-primary transition-colors"
+                disabled={interests.length === 0}
+                className="rounded-lg bg-primary px-8 py-3 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-30"
               >
-                {tag}
+                Next
               </button>
-            ))}
-          </div>
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setStep(1)}
-              className="rounded-lg border border-foreground/20 px-6 py-2 text-sm hover:bg-foreground/5 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              className="rounded-lg bg-primary px-6 py-2 text-white font-medium hover:bg-primary-dark transition-colors"
-            >
-              {skills ? "Next" : "Skip"}
-            </button>
-          </div>
-        </div>
-      )}
+            </div>
+          </SlideWrapper>
 
-      {step === 3 && (
-        <div>
-          <h2 className="font-display text-lg font-bold mb-4">
-            How much time?
-          </h2>
-          <div className="space-y-2">
-            {timeOptions.map((option) => (
-              <button
-                key={option}
-                onClick={() => setTime(option)}
-                className={`block w-full text-left rounded-lg border p-3 text-sm transition-colors ${
-                  time === option
-                    ? "border-primary bg-primary/5"
-                    : "border-foreground/10 bg-white hover:border-foreground/20"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setStep(2)}
-              className="rounded-lg border border-foreground/20 px-6 py-2 text-sm hover:bg-foreground/5 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => setStep(4)}
-              disabled={!time}
-              className="rounded-lg bg-primary px-6 py-2 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+          {/* Slide 1: Skills */}
+          <SlideWrapper visible={slide === 1}>
+            <h1 className="font-display text-3xl font-bold mb-2 text-center">
+              What skills can you offer?
+            </h1>
+            <p className="text-foreground/50 text-center mb-8">
+              Optional — skip if you&rsquo;re not sure yet.
+            </p>
 
-      {step === 4 && (
-        <div>
-          <h2 className="font-display text-lg font-bold mb-4">
-            How can we reach you?
-          </h2>
-          <p className="text-sm text-foreground/60 mb-6">
-            We use Signal for real-time chat, Google Docs for working drafts,
-            and GitHub for code and specs. You don&apos;t need all of these —
-            we&apos;ll work with whatever suits you.
-          </p>
+            {skills.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {skills.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-3 py-1 text-sm"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => removeSkill(tag)}
+                      className="hover:text-primary-dark ml-1"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Preferred contact method
-              </label>
-              <select
-                value={contact.method}
-                onChange={(e) =>
-                  setContact((c) => ({ ...c, method: e.target.value }))
-                }
-                className="w-full rounded-lg border border-foreground/20 bg-white px-4 py-3 text-sm focus:border-primary focus:outline-none"
-              >
-                <option value="email">Email (we already have it)</option>
-                <option value="signal">Signal</option>
-                <option value="other">Other</option>
-              </select>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Type a skill and press enter..."
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && skillInput.trim()) {
+                    e.preventDefault();
+                    addSkill(skillInput.trim());
+                    setSkillInput("");
+                  }
+                }}
+                className="flex-1 rounded-lg border border-foreground/20 bg-white px-4 py-3 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+              />
             </div>
 
-            {contact.method === "signal" && (
-              <input
-                type="tel"
-                placeholder="Phone number for Signal"
-                value={contact.signal}
-                onChange={(e) =>
-                  setContact((c) => ({ ...c, signal: e.target.value }))
-                }
-                className="w-full rounded-lg border border-foreground/20 bg-white px-4 py-3 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
-              />
-            )}
+            <div className="flex flex-wrap gap-2">
+              {skillSuggestions
+                .filter((s) => !skills.includes(s))
+                .map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => addSkill(tag)}
+                    className="rounded-full border border-foreground/15 px-3 py-1 text-xs hover:border-primary hover:text-primary transition-colors"
+                  >
+                    + {tag}
+                  </button>
+                ))}
+            </div>
 
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                checked={contact.googleDocs}
-                onChange={(e) =>
-                  setContact((c) => ({
-                    ...c,
-                    googleDocs: e.target.checked,
-                  }))
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={goBack}
+                className="rounded-lg border border-foreground/20 px-6 py-3 text-sm hover:bg-foreground/5 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={() =>
+                  goNext({ skills })
                 }
-                className="mt-1"
-              />
-              <span className="text-sm">
-                Happy to be added to Google Docs for collaborative editing?
-              </span>
-            </label>
+                className="rounded-lg bg-primary px-8 py-3 text-white font-medium hover:bg-primary-dark transition-colors"
+              >
+                {skills.length > 0 ? "Next" : "Skip"}
+              </button>
+            </div>
+          </SlideWrapper>
 
-            {contact.googleDocs && (
-              <input
-                type="email"
-                placeholder="Gmail / Google account email"
-                value={contact.googleEmail}
-                onChange={(e) =>
-                  setContact((c) => ({ ...c, googleEmail: e.target.value }))
-                }
-                className="w-full rounded-lg border border-foreground/20 bg-white px-4 py-3 text-sm placeholder:text-foreground/40 focus:border-primary focus:outline-none"
-              />
-            )}
+          {/* Slide 2: Time */}
+          <SlideWrapper visible={slide === 2}>
+            <h1 className="font-display text-3xl font-bold mb-2 text-center">
+              How much time can you give?
+            </h1>
+            <p className="text-foreground/50 text-center mb-8">
+              No pressure — any amount helps.
+            </p>
+            <div className="space-y-3">
+              {timeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setTime(option.value)}
+                  className={`block w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+                    time === option.value
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-foreground/10 bg-white hover:border-foreground/20"
+                  }`}
+                >
+                  <span className="font-display font-bold text-sm">
+                    {option.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={goBack}
+                className="rounded-lg border border-foreground/20 px-6 py-3 text-sm hover:bg-foreground/5 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => goNext({ time })}
+                disabled={!time}
+                className="rounded-lg bg-primary px-8 py-3 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-30"
+              >
+                Next
+              </button>
+            </div>
+          </SlideWrapper>
 
-            <label className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                checked={contact.listedOnMembers}
-                onChange={(e) =>
-                  setContact((c) => ({
-                    ...c,
-                    listedOnMembers: e.target.checked,
-                  }))
-                }
-                className="mt-1"
-              />
-              <span className="text-sm">
-                Happy to be listed on the Members page?
-              </span>
-            </label>
-          </div>
+          {/* Slide 3: Profile photo & contact preference */}
+          <SlideWrapper visible={slide === 3}>
+            <h1 className="font-display text-3xl font-bold mb-2 text-center">
+              One last thing
+            </h1>
+            <p className="text-foreground/50 text-center mb-8">
+              Both optional — you can always change these later.
+            </p>
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setStep(3)}
-              className="rounded-lg border border-foreground/20 px-6 py-2 text-sm hover:bg-foreground/5 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleFinish}
-              disabled={saving}
-              className="rounded-lg bg-primary px-6 py-2 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Finish"}
-            </button>
-          </div>
+            <div className="space-y-8">
+              {/* Avatar upload */}
+              <div className="text-center">
+                <p className="font-display font-bold text-sm mb-4">
+                  Want to add a profile picture?
+                </p>
+                <label className="cursor-pointer inline-block">
+                  <div
+                    className={`w-24 h-24 rounded-full mx-auto border-2 border-dashed transition-colors overflow-hidden flex items-center justify-center ${
+                      avatarPreview
+                        ? "border-primary"
+                        : "border-foreground/20 hover:border-foreground/40"
+                    }`}
+                  >
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-foreground/30 text-3xl">+</span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </label>
+                {avatarUploading && (
+                  <p className="text-xs text-foreground/40 mt-2">
+                    Uploading...
+                  </p>
+                )}
+                <p className="text-xs text-foreground/40 mt-2">
+                  You can do this later
+                </p>
+              </div>
+
+              {/* Contact visibility toggle */}
+              <label className="flex items-center gap-4 rounded-xl border-2 border-foreground/10 p-4 cursor-pointer hover:border-foreground/20 transition-colors">
+                <div
+                  className={`w-12 h-7 rounded-full relative transition-colors duration-200 shrink-0 ${
+                    showContactDetails ? "bg-primary" : "bg-foreground/20"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
+                      showContactDetails
+                        ? "translate-x-5"
+                        : "translate-x-0.5"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <span className="font-display font-bold text-sm block">
+                    Happy to be contacted by other members?
+                  </span>
+                  <span className="text-xs text-foreground/50">
+                    Your email will be visible on your profile to other members
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={goBack}
+                className="rounded-lg border border-foreground/20 px-6 py-3 text-sm hover:bg-foreground/5 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleFinish}
+                disabled={saving}
+                className="rounded-lg bg-primary px-8 py-3 text-white font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Let\u2019s go!"}
+              </button>
+            </div>
+          </SlideWrapper>
         </div>
-      )}
+      </div>
     </div>
   );
 }

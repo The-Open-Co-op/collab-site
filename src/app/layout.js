@@ -13,9 +13,9 @@ const sawarabiMincho = Sawarabi_Mincho({
 });
 
 export const metadata = {
-  title: "PLANET — The Co-Operating System",
+  title: "Collab — The Open Co-op",
   description:
-    "Personal trust vault and network client, built by a cooperative, owned by its members.",
+    "The Open Co-op's collaboration space. Join us in building PLANET — a trust vault and network client, owned by its members.",
 };
 
 export default function RootLayout({ children }) {

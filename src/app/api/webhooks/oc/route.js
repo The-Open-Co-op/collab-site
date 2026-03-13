@@ -1,58 +1,53 @@
 import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req) {
   try {
     const event = await req.json();
-
-    // Log full payload for debugging
     console.log("OC webhook received:", JSON.stringify(event));
 
-    const email = event.data?.member?.memberAccount?.email
-      || event.data?.member?.account?.email
-      || event.data?.fromCollective?.email
-      || event.data?.email;
+    const email =
+      event.data?.member?.memberAccount?.email ||
+      event.data?.member?.account?.email ||
+      event.data?.fromCollective?.email ||
+      event.data?.email;
 
     if (!email) {
       console.log("OC webhook: no email found in payload");
       return NextResponse.json({ ok: true, skipped: true });
     }
 
-    if (!process.env.NOCODB_API_TOKEN) {
-      console.log("OC webhook: NocoDB not configured, email:", email);
-      return NextResponse.json({ ok: true });
-    }
+    const name =
+      event.data?.member?.memberAccount?.name ||
+      event.data?.member?.account?.name ||
+      event.data?.fromCollective?.name;
 
-    // Check if member already exists
-    const existing = await fetch(
-      `https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records?where=(email,eq,${encodeURIComponent(email)})&limit=1`,
+    const slug =
+      event.data?.member?.memberAccount?.slug ||
+      event.data?.member?.account?.slug ||
+      event.data?.fromCollective?.slug;
+
+    const tierName =
+      event.data?.member?.tier?.name ||
+      event.data?.tier?.name ||
+      event.data?.order?.tier?.name ||
+      "free";
+
+    // Upsert member — create if new, update tier if existing
+    const { error } = await supabase.from("members").upsert(
       {
-        headers: { "xc-token": process.env.NOCODB_API_TOKEN },
-      }
+        email,
+        name: name || undefined,
+        oc_slug: slug || undefined,
+        oc_tier: tierName.toLowerCase(),
+      },
+      { onConflict: "email", ignoreDuplicates: false }
     );
-    const { list } = await existing.json();
 
-    if (!list || list.length === 0) {
-      const tierName = event.data?.member?.tier?.name
-        || event.data?.tier?.name
-        || event.data?.order?.tier?.name
-        || "free";
-      await fetch(
-        "https://app.nocodb.com/api/v2/tables/m4p0kvu7jgvsu6u/records",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "xc-token": process.env.NOCODB_API_TOKEN,
-          },
-          body: JSON.stringify({
-            email,
-            membership_level: tierName.toLowerCase(),
-          }),
-        }
-      );
-      console.log("OC webhook: created NocoDB record for", email);
+    if (error) {
+      console.error("Supabase upsert error:", error.message);
     } else {
-      console.log("OC webhook: member already exists", email);
+      console.log("OC webhook: upserted member", email);
     }
 
     return NextResponse.json({ ok: true });

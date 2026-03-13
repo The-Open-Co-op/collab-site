@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { verifyToken } from "@/lib/otp";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -16,62 +17,76 @@ export async function GET(req) {
     return redirect("/login?error=invalid-token");
   }
 
-  // Create a session token
-  const sessionToken = jwt.sign(
-    { email, isMember: false },
-    process.env.NEXTAUTH_SECRET,
-    { expiresIn: "30d" }
-  );
-
-  // Check OC membership
+  // Look up member in Supabase
+  let memberName = null;
   let isMember = false;
-  try {
-    const res = await fetch("https://api.opencollective.com/graphql/v2", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.OPEN_COLLECTIVE_API_KEY && {
-          "Api-Key": process.env.OPEN_COLLECTIVE_API_KEY,
-        }),
-      },
-      body: JSON.stringify({
-        query: `
-          query($slug: String!, $email: EmailAddress!) {
-            account(slug: $slug) {
-              members(email: $email, limit: 1) {
-                nodes { role }
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id, name")
+    .eq("email", email)
+    .limit(1)
+    .single();
+
+  if (member) {
+    isMember = true;
+    memberName = member.name;
+  } else {
+    // Fall back to OC membership check
+    try {
+      const res = await fetch("https://api.opencollective.com/graphql/v2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.OPEN_COLLECTIVE_API_KEY && {
+            "Api-Key": process.env.OPEN_COLLECTIVE_API_KEY,
+          }),
+        },
+        body: JSON.stringify({
+          query: `
+            query($slug: String!, $email: EmailAddress!) {
+              account(slug: $slug) {
+                members(email: $email, limit: 1) {
+                  nodes { role account { name slug } }
+                }
               }
             }
-          }
-        `,
-        variables: { slug: "open-coop", email },
-      }),
-    });
-    const data = await res.json();
-    if (data.errors) {
-      console.error("OC membership check errors:", JSON.stringify(data.errors));
+          `,
+          variables: { slug: "open-coop", email },
+        }),
+      });
+      const data = await res.json();
+      const members = data?.data?.account?.members?.nodes;
+      if (members && members.length > 0) {
+        isMember = true;
+        memberName = members[0]?.account?.name;
+        // Create the member in Supabase since they exist in OC but not locally
+        await supabase
+          .from("members")
+          .insert({
+            email,
+            name: memberName,
+            oc_slug: members[0]?.account?.slug,
+          });
+      }
+    } catch (err) {
+      console.error("OC membership check failed:", err.message);
     }
-    const members = data?.data?.account?.members?.nodes;
-    isMember = members && members.length > 0;
-    console.log("OC membership check:", { email, isMember, memberNodes: members });
-  } catch (err) {
-    console.error("OC membership check failed:", err.message);
   }
 
-  // Re-sign with membership status
-  const finalToken = jwt.sign(
-    { email, isMember },
-    process.env.NEXTAUTH_SECRET,
-    { expiresIn: "30d" }
-  );
+  const payload = { email, isMember };
+  if (memberName) payload.name = memberName;
 
-  // Set session cookie
+  const finalToken = jwt.sign(payload, process.env.NEXTAUTH_SECRET, {
+    expiresIn: "30d",
+  });
+
   const cookieStore = await cookies();
   cookieStore.set("session-token", finalToken, {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
     path: "/",
   });
 

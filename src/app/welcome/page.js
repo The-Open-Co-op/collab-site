@@ -14,11 +14,13 @@ function WelcomeContent() {
   const [signedIn, setSignedIn] = useState(false);
   const [memberName, setMemberName] = useState(null);
 
-  // Try auto-signin using OC order ID, store params for fallback
   useEffect(() => {
     const orderIdV2 = searchParams.get("orderIdV2");
     const legacyOrderId = searchParams.get("orderId");
-    if ((orderIdV2 || legacyOrderId) && searchParams.get("status") === "PAID") {
+    if (
+      (orderIdV2 || legacyOrderId) &&
+      searchParams.get("status") === "PAID"
+    ) {
       setOrderParams({ orderIdV2, legacyOrderId });
       setAutoSigningIn(true);
       fetch("/api/auth/quick-signin", {
@@ -90,19 +92,32 @@ function WelcomeContent() {
     const firstName = memberName?.split(" ")[0];
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="w-full max-w-md text-center">
-          <h1 className="font-display text-4xl font-bold mb-4">
+        <div className="w-full max-w-lg text-center">
+          <h1 className="font-display text-5xl font-bold mb-6">
             Welcome{firstName ? `, ${firstName}` : ""}!
           </h1>
-          <p className="text-lg text-foreground/70 mb-8">
-            Thank you for joining The Open Co-op. We&rsquo;re glad you&rsquo;re here.
+          <p className="text-xl text-foreground/70 mb-4 leading-relaxed">
+            You&rsquo;re now a member of The Open Co-op.
+          </p>
+          <p className="text-lg text-foreground/50 mb-10 leading-relaxed">
+            We&rsquo;re a community building PLANET &mdash; a digital
+            infrastructure owned by its members, not shareholders. Every
+            contribution matters, and yours starts now.
           </p>
           <button
-            onClick={() => router.push("/home")}
-            className="w-full rounded-lg bg-primary px-4 py-3 text-white font-medium hover:bg-primary-dark transition-colors"
+            onClick={() => router.push("/home/get-started")}
+            className="rounded-lg bg-primary px-8 py-4 text-white text-lg font-medium hover:bg-primary-dark transition-colors"
           >
-            Go to dashboard
+            Let&rsquo;s get you set up &rarr;
           </button>
+          <p className="mt-6">
+            <button
+              onClick={() => router.push("/home")}
+              className="text-sm text-foreground/40 hover:text-foreground/60 transition-colors"
+            >
+              Skip to dashboard
+            </button>
+          </p>
         </div>
       </div>
     );
@@ -120,7 +135,7 @@ function WelcomeContent() {
         </p>
         <p className="text-foreground/60 mb-8">
           Enter the email you used on Open Collective to go straight to the
-          member dashboard.
+          member area.
         </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input

@@ -1,5 +1,5 @@
 const ORG = "The-Open-Co-op";
-const REPO = "planet-site";
+const REPO = "planet";
 
 function headers() {
   const h = { Accept: "application/vnd.github+json" };
@@ -21,6 +21,33 @@ async function ghFetch(path) {
   }
 
   return res.json();
+}
+
+// Labels that map to member interest categories
+const INTEREST_LABELS = [
+  "help-wanted",
+  "good-first-issue",
+  "governance",
+  "product",
+  "outreach",
+  "business",
+];
+
+export async function getIssuesByLabels(limit = 20) {
+  const data = await ghFetch(
+    `/repos/${ORG}/${REPO}/issues?labels=${INTEREST_LABELS.join(",")}&state=open&per_page=${limit}&sort=updated`
+  );
+
+  if (!data) return [];
+
+  return data.map((issue) => ({
+    title: issue.title,
+    body: issue.body?.slice(0, 120) || "",
+    url: issue.html_url,
+    number: issue.number,
+    labels: issue.labels.map((l) => l.name),
+    updatedAt: issue.updated_at,
+  }));
 }
 
 export async function getHelpWantedIssues(limit = 5) {

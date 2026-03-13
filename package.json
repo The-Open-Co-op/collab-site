@@ -1,5 +1,5 @@
 {
-  "name": "planet-site",
+  "name": "collab-site",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.1",
+    "@vercel/blob": "^2.3.1",
     "jose": "^6.2.1",
     "jsonwebtoken": "^9.0.3",
     "next": "16.1.6",

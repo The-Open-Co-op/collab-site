@@ -1,55 +1,65 @@
-import { getMembers, getCollectiveStats } from "@/lib/opencollective";
+import { supabase } from "@/lib/supabase";
 
 export default async function MembersPage() {
-  const [members, stats] = await Promise.all([
-    getMembers(100).catch(() => []),
-    getCollectiveStats().catch(() => null),
-  ]);
+  const { data: members, count } = await supabase
+    .from("members")
+    .select("id, name, avatar_url, interests, joined_at", { count: "exact" })
+    .order("joined_at", { ascending: false });
+
+  const totalCount = count || members?.length || 0;
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <h1 className="font-display text-3xl font-bold mb-2">Members</h1>
-      {stats && (
-        <p className="text-foreground/60 mb-8">
-          {stats.memberCount} members and counting.
-        </p>
-      )}
+      <p className="text-foreground/50 mb-8">
+        {totalCount} member{totalCount !== 1 ? "s" : ""} and counting
+      </p>
 
-      {members.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {members.map((member) => (
-            <div
-              key={member.slug}
-              className="flex items-center gap-3 rounded-lg border border-foreground/10 bg-white p-3"
-            >
-              {member.imageUrl ? (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {(members || []).map((member) => (
+          <a
+            key={member.id}
+            href={`/home/members/${member.id}`}
+            className="rounded-xl border border-foreground/10 bg-white p-4 hover:border-foreground/20 transition-colors text-center"
+          >
+            <div className="w-16 h-16 rounded-full mx-auto mb-3 bg-foreground/5 overflow-hidden flex items-center justify-center">
+              {member.avatar_url ? (
                 <img
-                  src={member.imageUrl}
-                  alt=""
-                  className="w-10 h-10 rounded-full bg-foreground/5"
+                  src={member.avatar_url}
+                  alt={member.name || "Member"}
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  {member.name?.charAt(0) || "?"}
-                </div>
+                <span className="text-2xl text-foreground/20">
+                  {(member.name || "?")[0]?.toUpperCase()}
+                </span>
               )}
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{member.name}</p>
-                <p className="text-xs text-foreground/40">
-                  Joined {new Date(member.joinedAt).toLocaleDateString("en-GB", {
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-foreground/50">
-          Member list will appear once the Open Collective API is connected.
-        </p>
-      )}
+            <p className="font-display font-bold text-sm truncate">
+              {member.name || "Member"}
+            </p>
+            {member.interests?.length > 0 && (
+              <div className="flex flex-wrap gap-1 justify-center mt-2">
+                {member.interests.slice(0, 2).map((interest) => (
+                  <span
+                    key={interest}
+                    className="text-[10px] bg-foreground/5 text-foreground/40 rounded-full px-2 py-0.5"
+                  >
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-[10px] text-foreground/30 mt-2">
+              Joined{" "}
+              {new Date(member.joined_at).toLocaleDateString("en-GB", {
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }
