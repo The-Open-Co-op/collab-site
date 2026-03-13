@@ -50,7 +50,7 @@ export default async function HomeLayout({ children }) {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 min-w-0 p-4 md:p-10 overflow-x-hidden md:h-screen md:overflow-y-auto">{children}</main>
+      <main className="flex-1 min-w-0 p-4 md:p-10 overflow-x-hidden md:h-screen md:overflow-hidden">{children}</main>
     </div>
   );
 }

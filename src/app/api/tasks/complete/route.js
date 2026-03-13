@@ -36,3 +36,34 @@ export async function POST(req) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(req) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const { taskId } = await req.json();
+  if (!taskId) {
+    return NextResponse.json({ error: "taskId required" }, { status: 400 });
+  }
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", session.user.email)
+    .limit(1)
+    .single();
+
+  if (!member) {
+    return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  }
+
+  await supabase
+    .from("task_completions")
+    .delete()
+    .eq("member_id", member.id)
+    .eq("task_id", taskId);
+
+  return NextResponse.json({ ok: true });
+}

@@ -35,30 +35,45 @@ function MemberLink({ name, memberId }) {
 }
 
 // ─── Task Item ──────────────────────────────────────────────
-function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
+function TaskItem({ task, onComplete, onUndo, isCompleted, isPersistent }) {
   const [completing, setCompleting] = useState(false);
   const [checked, setChecked] = useState(isCompleted);
+  const [showUndo, setShowUndo] = useState(false);
+  const [sliding, setSliding] = useState(false);
+  const undoTimer = useRef(null);
 
   async function handleCheck() {
-    if (completing) return;
+    if (completing || showUndo) return;
     setCompleting(true);
     setChecked(true);
     await onComplete(task);
-    if (!isPersistent) {
-      // Animation handled by parent removing the task
-    }
     setCompleting(false);
+
+    if (!isPersistent) {
+      setShowUndo(true);
+      undoTimer.current = setTimeout(() => {
+        setShowUndo(false);
+        setSliding(true);
+      }, 4000);
+    }
+  }
+
+  function handleUndo() {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setShowUndo(false);
+    setChecked(false);
+    onUndo(task);
   }
 
   return (
     <div
       className={`group flex items-start gap-3 rounded-xl border border-foreground/10 bg-white p-4 transition-all duration-500 ${
-        checked && !isPersistent ? "opacity-0 translate-x-full" : ""
+        sliding ? "opacity-0 translate-x-full" : ""
       }`}
     >
       <button
         onClick={handleCheck}
-        disabled={completing || (checked && !isPersistent)}
+        disabled={completing || checked}
         className={`mt-0.5 w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all duration-300 ${
           checked
             ? "bg-primary border-primary"
@@ -94,12 +109,20 @@ function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
         ) : (
           <span className="font-display font-bold text-sm">{task.title}</span>
         )}
-        {task.description && (
+        {task.description && !showUndo && (
           <p className="text-xs text-foreground/50 mt-0.5 line-clamp-1">
             {task.description}
           </p>
         )}
-        {task.source === "github" && (
+        {showUndo && (
+          <button
+            onClick={handleUndo}
+            className="text-xs text-primary hover:underline mt-0.5"
+          >
+            Undo
+          </button>
+        )}
+        {task.source === "github" && !showUndo && (
           <span className="inline-block mt-1 text-[10px] bg-foreground/5 text-foreground/40 rounded px-1.5 py-0.5">
             GitHub
           </span>
@@ -347,6 +370,16 @@ export default function CollaborationStation({
 
   const feed = feedItems.slice(0, 20);
 
+  // Fetch help requests client-side to avoid server caching issues
+  useEffect(() => {
+    fetch("/api/help-requests")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.requests) setHelpRequests(data.requests);
+      })
+      .catch(() => {});
+  }, []);
+
   // Real-time subscriptions
   useEffect(() => {
     const sb = createBrowserClient();
@@ -397,6 +430,24 @@ export default function CollaborationStation({
     };
   }, []);
 
+  // Remove a task from the list and replace with next available
+  const removeTask = useCallback(
+    (taskId) => {
+      setTasks((prev) => {
+        const remaining = prev.filter((t) => t.id !== taskId);
+        const nextTask = allTasks.find(
+          (t) =>
+            !remaining.some((r) => r.id === t.id) &&
+            !completedIds.has(t.id) &&
+            t.id !== taskId
+        );
+        if (nextTask) return [...remaining, nextTask].slice(0, 5);
+        return remaining;
+      });
+    },
+    [allTasks, completedIds]
+  );
+
   // Task completion handler
   const handleTaskComplete = useCallback(
     async (task) => {
@@ -425,31 +476,35 @@ export default function CollaborationStation({
         body: JSON.stringify({ taskId: task.id }),
       });
 
-      // If persistent, pre-fill the I Did... input with suggestion
-      if (task.is_persistent) {
-        // The task stays in the list but is marked complete
-        return;
-      }
+      if (task.is_persistent) return;
 
-      // Remove completed task and add next available one
-      setTimeout(() => {
-        setTasks((prev) => {
-          const remaining = prev.filter((t) => t.id !== task.id);
-          // Find next task not in current list and not completed
-          const nextTask = allTasks.find(
-            (t) =>
-              !remaining.some((r) => r.id === t.id) &&
-              !completedIds.has(t.id) &&
-              t.id !== task.id
-          );
-          if (nextTask) {
-            return [...remaining, nextTask].slice(0, 5);
-          }
-          return remaining;
-        });
-      }, 500);
+      // Task slides away after undo window (4.5s total)
+      setTimeout(() => removeTask(task.id), 4500);
     },
-    [member, allTasks, completedIds]
+    [member, removeTask]
+  );
+
+  // Task undo handler
+  const handleTaskUndo = useCallback(
+    async (task) => {
+      setCompletedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
+
+      // Remove the completion feed item
+      setFeedItems((prev) =>
+        prev.filter((item) => !(item.type === "completion" && item.text === task.title && item.id.startsWith("comp-temp-")))
+      );
+
+      await fetch("/api/tasks/complete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId: task.id }),
+      });
+    },
+    []
   );
 
   // Contribution submit handler
@@ -527,16 +582,16 @@ export default function CollaborationStation({
   ).size;
 
   return (
-    <div>
+    <div className="lg:h-[calc(100vh-80px)] lg:flex lg:flex-col">
       <h1 className="font-display text-3xl font-bold mb-1">
         {firstName ? `Hi, ${firstName}` : "Collaboration Station"}
       </h1>
-      <p className="text-foreground/50 mb-8">
+      <p className="text-foreground/50 mb-4">
         Welcome to The Open Co-op&rsquo;s Collaboration Station
       </p>
 
       {/* 3-column layout */}
-      <div className="grid gap-6 lg:grid-cols-3 lg:h-[calc(100vh-220px)]">
+      <div className="grid gap-6 lg:grid-cols-3 lg:flex-1 lg:min-h-0">
         {/* Left: Things You Can Do */}
         <div className="lg:overflow-y-auto lg:pr-1">
           <h2 className="font-display text-lg font-bold mb-4">
@@ -549,6 +604,7 @@ export default function CollaborationStation({
                   key={task.id}
                   task={task}
                   onComplete={handleTaskComplete}
+                  onUndo={handleTaskUndo}
                   isCompleted={completedIds.has(task.id)}
                   isPersistent={task.is_persistent}
                 />
@@ -665,7 +721,7 @@ export default function CollaborationStation({
       </div>
 
       {/* Momentum strip */}
-      <div className="mt-10 rounded-xl border border-foreground/10 bg-white px-6 py-4 flex flex-wrap items-center justify-center gap-6 text-sm text-foreground/60">
+      <div className="mt-4 shrink-0 rounded-xl border border-foreground/10 bg-white px-6 py-3 flex flex-wrap items-center justify-center gap-6 text-sm text-foreground/60">
         <span>
           <strong className="text-foreground">{weekTotal}</strong> contributions
           this week
@@ -678,7 +734,7 @@ export default function CollaborationStation({
       </div>
 
       {/* Quick links */}
-      <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
+      <div className="mt-2 shrink-0 flex flex-wrap justify-center gap-4 text-sm">
         {[
           { label: "Docs", href: "https://docs.open.coop" },
           {
