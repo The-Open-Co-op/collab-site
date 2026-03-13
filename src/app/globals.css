@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Punctuation Fix";
+  src: local("Georgia"), local("Times New Roman");
+  unicode-range: U+2018-201F, U+2013-2014;
+}
+
 :root {
   --background: #F5F3EF;
   --foreground: #000000;
@@ -15,8 +21,8 @@
   --color-primary-dark: var(--primary-dark);
   --color-white: var(--white);
   --color-warm-bg: #F5F3EF;
-  --font-sans: var(--font-sawarabi-mincho), Georgia, serif;
-  --font-display: var(--font-dm-sans);
+  --font-sans: "Punctuation Fix", var(--font-sawarabi-mincho), Georgia, serif;
+  --font-display: "Punctuation Fix", var(--font-dm-sans);
 }
 
 body {
