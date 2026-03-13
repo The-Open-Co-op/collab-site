@@ -214,17 +214,12 @@ export default async function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               {
-                label: "Free",
-                price: "£0/month",
-                href: "https://opencollective.com/open-coop/contribute/free-99617/checkout?interval=month&amount=0&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
-              },
-              {
-                label: "Pioneer",
+                label: "Supporter",
                 price: "£5/month",
                 href: "https://opencollective.com/open-coop/contribute/planet-pioneer-14003/checkout?interval=month&amount=500&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
               },
               {
-                label: "Pioneer+",
+                label: "Supporter+",
                 price: "£10/month",
                 href: "https://opencollective.com/open-coop/contribute/planet-pioneer-61741/checkout?interval=month&amount=1000&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
               },
@@ -232,6 +227,11 @@ export default async function Home() {
                 label: "Catalyst",
                 price: "£50/month",
                 href: "https://opencollective.com/open-coop/contribute/catalyst-14004/checkout?interval=month&amount=5000&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
+              },
+              {
+                label: "Free",
+                price: "£0/month",
+                href: "https://opencollective.com/open-coop/contribute/free-99617/checkout?interval=month&amount=0&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
               },
             ].map((tier) => (
               <a

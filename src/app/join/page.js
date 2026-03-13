@@ -37,36 +37,34 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-16 md:py-24">
+    <div className="h-screen flex flex-col items-center justify-center px-6 py-6">
       <div className="max-w-2xl w-full">
-        <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
           Join The Open Co-op
         </h1>
-        <p className="mt-6 text-lg text-foreground/70 leading-relaxed">
+        <p className="mt-3 text-foreground/70 leading-relaxed">
           We&rsquo;re working to catalyse the collaborative, regenerative economy.
-        </p>
-        <p className="mt-4 text-lg text-foreground/70 leading-relaxed">
           Our mission is to co-create PLANET — a member-owned co-operating system
           to support collaboration at scale.
         </p>
 
-        <h2 className="font-display text-2xl font-bold mt-16 mb-8">
+        <h2 className="font-display text-xl font-bold mt-8 mb-4">
           Are you happy to commit to our shared Principles?
         </h2>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           {principles.map((p, i) => (
             <button
               key={p.title}
               onClick={() => toggle(i)}
-              className={`w-full text-left flex items-start gap-4 rounded-xl border-2 p-6 transition-all ${
+              className={`w-full text-left flex items-start gap-3 rounded-xl border-2 p-4 transition-all ${
                 checked[i]
                   ? "border-primary bg-primary/5"
                   : "border-foreground/10 bg-white hover:border-foreground/20"
               }`}
             >
               <div
-                className={`mt-0.5 w-7 h-7 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all duration-300 ${
+                className={`mt-0.5 w-6 h-6 rounded-lg border-2 shrink-0 flex items-center justify-center transition-all duration-300 ${
                   checked[i]
                     ? "bg-primary border-primary"
                     : "border-foreground/20"
@@ -74,7 +72,7 @@ export default function JoinPage() {
               >
                 {checked[i] && (
                   <svg
-                    className="w-5 h-5 text-white"
+                    className="w-4 h-4 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -89,9 +87,9 @@ export default function JoinPage() {
                 )}
               </div>
               <div>
-                <h3 className="font-display font-bold text-lg">{p.title}</h3>
+                <h3 className="font-display font-bold">{p.title}</h3>
                 {p.lines.map((line, j) => (
-                  <p key={j} className="text-foreground/60 mt-1">
+                  <p key={j} className="text-sm text-foreground/60 mt-0.5">
                     {line}
                   </p>
                 ))}
@@ -100,11 +98,11 @@ export default function JoinPage() {
           ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mt-12">
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
           <button
             onClick={() => router.push("/join/membership")}
             disabled={!allChecked}
-            className={`rounded-full px-8 py-3.5 font-medium text-lg transition-all ${
+            className={`rounded-full px-8 py-3 font-medium transition-all ${
               allChecked
                 ? "bg-primary text-white hover:bg-primary-dark"
                 : "bg-foreground/10 text-foreground/30 cursor-not-allowed"
@@ -114,7 +112,7 @@ export default function JoinPage() {
           </button>
           <a
             href="/join/feedback"
-            className="rounded-full border border-foreground/20 px-8 py-3.5 font-medium text-lg text-foreground/60 hover:bg-foreground/5 transition-colors text-center"
+            className="rounded-full border border-foreground/20 px-8 py-3 font-medium text-foreground/60 hover:bg-foreground/5 transition-colors text-center"
           >
             Not really
           </a>

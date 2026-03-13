@@ -1,20 +1,14 @@
 const tiers = [
   {
-    label: "Free",
-    price: "£0/month",
-    description: "Full membership, no cost",
-    href: "https://opencollective.com/open-coop/contribute/free-99617/checkout?interval=month&amount=0&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
-  },
-  {
-    label: "Pioneer",
+    label: "Supporter",
     price: "£5/month",
     description: "Support the mission",
     href: "https://opencollective.com/open-coop/contribute/planet-pioneer-14003/checkout?interval=month&amount=500&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
   },
   {
-    label: "Pioneer+",
+    label: "Supporter+",
     price: "£10/month",
-    description: "Go further",
+    description: "Support the mission",
     href: "https://opencollective.com/open-coop/contribute/planet-pioneer-61741/checkout?interval=month&amount=1000&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
   },
   {
@@ -23,6 +17,12 @@ const tiers = [
     description: "Accelerate the vision",
     href: "https://opencollective.com/open-coop/contribute/catalyst-14004/checkout?interval=month&amount=5000&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
   },
+  {
+    label: "Free",
+    price: "£0/month",
+    description: "Full membership, no cost",
+    href: "https://opencollective.com/open-coop/contribute/free-99617/checkout?interval=month&amount=0&name=&legalName=&email=&redirect=https://collab.open.coop/welcome",
+  },
 ];
 
 export default function MembershipPage() {
@@ -30,11 +30,10 @@ export default function MembershipPage() {
     <div className="min-h-screen flex flex-col items-center px-6 py-16 md:py-24">
       <div className="max-w-2xl w-full">
         <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
-          Choose your membership level
+          Membership Level
         </h1>
         <p className="mt-6 text-lg text-foreground/70">
-          Membership is free. If you can support the project financially,
-          choose what works for you. Every member gets the same voice
+          Choose what works for you. Every member gets the same voice
           regardless of what they pay.
         </p>
 
