@@ -56,12 +56,20 @@ const skillSuggestions = [
 
 const TOTAL_SLIDES = 4;
 
-function saveToProfile(data) {
-  return fetch("/api/profile", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  }).catch(() => {});
+async function saveToProfile(data) {
+  try {
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      console.error("Profile save failed:", err);
+    }
+  } catch (err) {
+    console.error("Profile save error:", err);
+  }
 }
 
 function ProgressBar({ current, total }) {
@@ -159,10 +167,12 @@ export default function GetStartedPage() {
       });
       const data = await res.json();
       if (data.url) {
-        saveToProfile({ avatar_url: data.url });
+        await saveToProfile({ avatar_url: data.url });
+      } else {
+        console.error("Avatar upload failed:", data.error);
       }
-    } catch {
-      // Non-critical
+    } catch (err) {
+      console.error("Avatar upload error:", err);
     }
     setAvatarUploading(false);
   }
