@@ -30,9 +30,14 @@ export const supabase = new Proxy(
 );
 
 // Client-side client using anon key (for real-time subscriptions only)
+// Singleton to avoid multiple GoTrueClient instances
+let _browserClient;
 export function createBrowserClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  if (!_browserClient) {
+    _browserClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+  }
+  return _browserClient;
 }
