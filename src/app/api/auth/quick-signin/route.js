@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { supabase } from "@/lib/supabase";
+import { addBrevoContact } from "@/lib/brevo";
 
 function mapOcTier(name) {
   const n = (name || "").toLowerCase();
@@ -70,6 +71,9 @@ async function ensureMember(email, name, ocSlug, ocTier) {
     .single();
 
   if (existing) return existing.id;
+
+  // New member — add to Brevo
+  addBrevoContact({ email, name, tier: ocTier });
 
   const { data: created } = await supabase
     .from("members")

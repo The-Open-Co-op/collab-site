@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { addBrevoContact } from "@/lib/brevo";
 
 function mapOcTier(name) {
   const n = (name || "").toLowerCase();
@@ -56,6 +57,7 @@ export async function POST(req) {
       console.error("Supabase upsert error:", error.message);
     } else {
       console.log("OC webhook: upserted member", email);
+      addBrevoContact({ email, name, tier: mapOcTier(tierName) });
     }
 
     return NextResponse.json({ ok: true });
