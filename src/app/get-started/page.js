@@ -204,7 +204,7 @@ export default function GetStartedPage() {
               What interests you most?
             </h1>
             <p className="text-foreground/50 text-center mb-8">
-              Choose as many as you like. This helps us show you relevant tasks.
+              Choose as many as you like. This helps us show you relevant details.
             </p>
             <div className="space-y-3">
               {interestOptions.map((option) => (

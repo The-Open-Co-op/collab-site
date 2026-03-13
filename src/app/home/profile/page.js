@@ -304,7 +304,7 @@ export default function ProfilePage() {
         {/* Membership info */}
         <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4">
           <p className="text-sm text-foreground/60">
-            Membership: <strong>{profile.oc_tier || "Free"}</strong>
+            Membership: <strong className="capitalize">{profile.oc_tier || "free"}</strong>
           </p>
           <p className="text-sm text-foreground/60 mt-1">
             Joined:{" "}

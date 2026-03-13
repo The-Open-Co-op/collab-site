@@ -121,6 +121,12 @@ export default async function DashboardPage() {
     .eq("title", "Email 3 people you trust to join The Open Co-op")
     .is("url", null);
 
+  // One-time: map legacy "pioneer" tier to "supporter"
+  await supabase
+    .from("members")
+    .update({ oc_tier: "supporter" })
+    .ilike("oc_tier", "%pioneer%");
+
   // Filter tasks for this member
   const memberInterests = member?.interests || [];
   const isFollower =

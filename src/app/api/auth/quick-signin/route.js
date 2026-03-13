@@ -3,6 +3,14 @@ import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import { supabase } from "@/lib/supabase";
 
+function mapOcTier(name) {
+  const n = (name || "").toLowerCase();
+  if (n.includes("catalyst")) return "catalyst";
+  if (n.includes("pioneer")) return "supporter";
+  if (n.includes("free")) return "free";
+  return n || "free";
+}
+
 async function findAccountByOrderId(orderIdV2, legacyOrderId) {
   const headers = { "Content-Type": "application/json" };
   if (process.env.OC_CLIENT_ID && process.env.OC_CLIENT_SECRET) {
@@ -81,7 +89,7 @@ export async function POST(req) {
     if (orderIdV2 || legacyOrderId) {
       const account = await findAccountByOrderId(orderIdV2, legacyOrderId);
       if (account.email) {
-        await ensureMember(account.email, account.name, account.slug, account.tier);
+        await ensureMember(account.email, account.name, account.slug, mapOcTier(account.tier));
         const sessionToken = createSession(account.email, account.name);
         const cookieStore = await cookies();
         cookieStore.set("session-token", sessionToken, {

@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+function mapOcTier(name) {
+  const n = (name || "").toLowerCase();
+  if (n.includes("catalyst")) return "catalyst";
+  if (n.includes("pioneer")) return "supporter";
+  if (n.includes("free")) return "free";
+  return n || "free";
+}
+
 export async function POST(req) {
   try {
     const event = await req.json();
@@ -39,7 +47,7 @@ export async function POST(req) {
         email,
         name: name || undefined,
         oc_slug: slug || undefined,
-        oc_tier: tierName.toLowerCase(),
+        oc_tier: mapOcTier(tierName),
       },
       { onConflict: "email", ignoreDuplicates: false }
     );
