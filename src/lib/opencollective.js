@@ -35,6 +35,7 @@ export async function getCollectiveStats() {
         stats {
           balance { value currency }
           yearlyBudget { value currency }
+          totalAmountRaised { value currency }
           contributorsCount
         }
       }
@@ -42,13 +43,14 @@ export async function getCollectiveStats() {
   `);
 
   if (!data?.account?.stats) {
-    return { balance: 0, yearlyBudget: 0, currency: "GBP", memberCount: 0 };
+    return { balance: 0, yearlyBudget: 0, totalRaised: 0, currency: "GBP", memberCount: 0 };
   }
 
-  const { balance, yearlyBudget, contributorsCount } = data.account.stats;
+  const { balance, yearlyBudget, totalAmountRaised, contributorsCount } = data.account.stats;
   return {
     balance: balance.value,
     yearlyBudget: yearlyBudget.value,
+    totalRaised: totalAmountRaised?.value || 0,
     currency: balance.currency,
     memberCount: contributorsCount,
   };
