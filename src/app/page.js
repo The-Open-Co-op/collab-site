@@ -147,6 +147,14 @@ export default async function Home() {
             </div>
           </div>
 
+          <a
+            href="https://planet-sepia.vercel.app/#/demo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-display inline-block mt-10 rounded-full border-2 border-primary px-8 py-3 text-primary font-medium hover:bg-primary hover:text-white transition-colors"
+          >
+            Try the demo &rarr;
+          </a>
         </div>
       </section>
 
@@ -322,7 +330,7 @@ export default async function Home() {
             test, translate, spread the word, and who want to be part of a new,
             regenerative economy built on trust.
           </p>
-          <p className="mt-4 text-foreground/70 leading-relaxed">
+          <p className="mt-4 text-lg text-foreground/70 leading-relaxed">
             When you join, you get access to The Open Co-op&apos;s Collaboration
             Station &mdash; a live workspace where you can see what&apos;s
             happening, pick up tasks, log contributions, and watch the project
