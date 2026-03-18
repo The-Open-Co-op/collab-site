@@ -409,7 +409,11 @@ export default function GetStartedPage() {
               </div>
 
               {/* Contact visibility toggle */}
-              <label className="flex items-center gap-4 rounded-xl border-2 border-foreground/10 p-4 cursor-pointer hover:border-foreground/20 transition-colors">
+              <button
+                type="button"
+                onClick={() => setShowContactDetails((v) => !v)}
+                className="flex items-center gap-4 rounded-xl border-2 border-foreground/10 p-4 cursor-pointer hover:border-foreground/20 transition-colors w-full text-left"
+              >
                 <div className="flex-1">
                   <span className="font-display font-bold text-sm block">
                     Happy to be contacted by other members?
@@ -431,7 +435,7 @@ export default function GetStartedPage() {
                     }`}
                   />
                 </div>
-              </label>
+              </button>
             </div>
 
             <div className="flex justify-between mt-8">
