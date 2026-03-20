@@ -72,8 +72,8 @@ export default function ProfilePage() {
 
     setAvatarError(null);
 
-    if (file.size > 5 * 1024 * 1024) {
-      setAvatarError("Image must be under 5 MB");
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError("Image must be under 2 MB");
       return;
     }
 
@@ -145,7 +145,15 @@ export default function ProfilePage() {
               className="hidden"
             />
           </label>
-          <p className="text-xs text-foreground/40 mt-2">Click to change (max 5 MB)</p>
+          <p className="text-xs text-foreground/40 mt-2">Click to change (max 2 MB)</p>
+          {profile.avatar_url && (
+            <button
+              onClick={() => updateField("avatar_url", null)}
+              className="text-xs text-red-500 hover:text-red-700 mt-1"
+            >
+              Remove photo
+            </button>
+          )}
           {avatarError && (
             <p className="text-xs text-red-500 mt-1">{avatarError}</p>
           )}
