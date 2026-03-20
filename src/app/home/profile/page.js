@@ -16,6 +16,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [newLink, setNewLink] = useState({ label: "", url: "" });
+  const [avatarError, setAvatarError] = useState(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -68,15 +70,31 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/upload-avatar", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    if (data.url) {
-      updateField("avatar_url", data.url);
+    setAvatarError(null);
+
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Image must be under 5 MB");
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAvatarError(data.error || "Upload failed — please try again");
+      } else if (data.url) {
+        updateField("avatar_url", data.url);
+      }
+    } catch {
+      setAvatarError("Upload failed — please check your connection and try again");
+    } finally {
+      setAvatarUploading(false);
     }
   }
 
@@ -106,8 +124,10 @@ export default function ProfilePage() {
         {/* Avatar */}
         <div className="text-center">
           <label className="cursor-pointer inline-block">
-            <div className="w-24 h-24 rounded-full mx-auto border-2 border-dashed border-foreground/20 hover:border-foreground/40 overflow-hidden flex items-center justify-center transition-colors">
-              {profile.avatar_url ? (
+            <div className={`w-24 h-24 rounded-full mx-auto border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${avatarUploading ? "border-primary/40 opacity-50" : "border-foreground/20 hover:border-foreground/40"}`}>
+              {avatarUploading ? (
+                <span className="text-foreground/30 text-sm">Uploading...</span>
+              ) : profile.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt="Avatar"
@@ -121,10 +141,14 @@ export default function ProfilePage() {
               type="file"
               accept="image/*"
               onChange={handleAvatarChange}
+              disabled={avatarUploading}
               className="hidden"
             />
           </label>
-          <p className="text-xs text-foreground/40 mt-2">Click to change</p>
+          <p className="text-xs text-foreground/40 mt-2">Click to change (max 5 MB)</p>
+          {avatarError && (
+            <p className="text-xs text-red-500 mt-1">{avatarError}</p>
+          )}
         </div>
 
         {/* Name */}
