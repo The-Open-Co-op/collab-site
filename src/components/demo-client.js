@@ -134,6 +134,24 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user }) {
             ...btnStyle,
           }}
         >
+          <button
+            onClick={() => setShowForm(false)}
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              background: "none",
+              border: "none",
+              fontSize: 18,
+              color: "#999",
+              cursor: "pointer",
+              lineHeight: 1,
+              padding: 4,
+            }}
+            aria-label="Close"
+          >
+            &times;
+          </button>
           {!user ? (
             // Not signed in — encourage sign-up
             <div>
