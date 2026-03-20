@@ -107,7 +107,7 @@ async function ensureMember(email, name, ocSlug, ocTier) {
   }
 
   // New member — add to Brevo
-  addBrevoContact({ email, name, tier: ocTier });
+  await addBrevoContact({ email, name, tier: ocTier });
 
   const { data: created } = await supabase
     .from("members")

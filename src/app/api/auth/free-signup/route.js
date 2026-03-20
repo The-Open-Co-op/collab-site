@@ -47,7 +47,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Could not create account" }, { status: 500 });
     }
 
-    addBrevoContact({ email, name, tier: "free" });
+    await addBrevoContact({ email, name, tier: "free" });
 
     // Sign them in
     const token = jwt.sign(

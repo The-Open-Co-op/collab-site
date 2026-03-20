@@ -79,7 +79,7 @@ export async function POST(req) {
       console.error("Supabase upsert error:", error.message);
     } else {
       console.log("OC webhook: upserted member", email, name, slug);
-      addBrevoContact({ email, name, tier: mapOcTier(tierName) });
+      await addBrevoContact({ email, name, tier: mapOcTier(tierName) });
     }
 
     return NextResponse.json({ ok: true });
