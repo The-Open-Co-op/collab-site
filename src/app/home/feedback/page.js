@@ -17,13 +17,18 @@ export default function FeedbackPage() {
   const [feedback, setFeedback] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [isContributor, setIsContributor] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
 
   async function loadFeedback() {
     try {
       const res = await fetch("/api/feedback");
       if (res.ok) {
         const data = await res.json();
-        setFeedback(data);
+        setFeedback(data.feedback || []);
+        setIsContributor(data.isContributor || false);
       }
     } catch {
       // silent
@@ -78,6 +83,40 @@ export default function FeedbackPage() {
       // silent
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleReply(feedbackId) {
+    if (!replyMessage.trim()) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch("/api/feedback/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback_id: feedbackId, message: replyMessage }),
+      });
+      if (res.ok) {
+        setReplyMessage("");
+        setReplyingTo(null);
+        loadFeedback();
+      }
+    } catch {
+      // silent
+    } finally {
+      setSendingReply(false);
+    }
+  }
+
+  async function handleDeleteReply(replyId) {
+    try {
+      await fetch("/api/feedback/reply", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: replyId }),
+      });
+      loadFeedback();
+    } catch {
+      // silent
     }
   }
 
@@ -169,6 +208,7 @@ export default function FeedbackPage() {
           <div className="space-y-3">
             {feedback.map((item) => {
               const context = labelForContext(item);
+              const replies = item.feedback_replies || [];
               return (
                 <div
                   key={item.id}
@@ -197,13 +237,15 @@ export default function FeedbackPage() {
                       <span className="text-xs text-foreground/30">
                         {formatDate(item.created_at)}
                       </span>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        disabled={deleting === item.id}
-                        className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
-                      >
-                        {deleting === item.id ? "..." : "Delete"}
-                      </button>
+                      {isContributor && (
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deleting === item.id}
+                          className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50"
+                        >
+                          {deleting === item.id ? "..." : "Delete"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {context && (
@@ -214,6 +256,98 @@ export default function FeedbackPage() {
                   <p className="text-sm text-foreground/70 whitespace-pre-wrap">
                     {item.message}
                   </p>
+
+                  {/* Replies */}
+                  {replies.length > 0 && (
+                    <div className="mt-3 space-y-2 pl-4 border-l-2 border-foreground/10">
+                      {replies.map((reply) => (
+                        <div key={reply.id}>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <div className="w-5 h-5 rounded-full bg-foreground/5 overflow-hidden flex items-center justify-center shrink-0">
+                              {reply.members?.avatar_url ? (
+                                <img
+                                  src={reply.members.avatar_url}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-[10px] text-foreground/30">
+                                  {(reply.members?.name || "?")[0]?.toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs font-medium">
+                              {reply.members?.name || "Contributor"}
+                            </span>
+                            <span className="text-[10px] text-foreground/30">
+                              {formatDate(reply.created_at)}
+                            </span>
+                            {isContributor && (
+                              <button
+                                onClick={() => handleDeleteReply(reply.id)}
+                                className="text-[10px] text-red-500 hover:text-red-700"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-xs text-foreground/60 whitespace-pre-wrap">
+                            {reply.message}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Reply form (contributors only) */}
+                  {isContributor && (
+                    <div className="mt-3">
+                      {replyingTo === item.id ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={replyMessage}
+                            onChange={(e) => setReplyMessage(e.target.value)}
+                            placeholder="Write a reply..."
+                            className="flex-1 rounded-lg border border-foreground/20 bg-foreground/5 px-3 py-2 text-xs focus:border-primary focus:outline-none"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleReply(item.id);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleReply(item.id)}
+                            disabled={sendingReply || !replyMessage.trim()}
+                            className="rounded-lg bg-primary px-3 py-2 text-xs text-white font-medium disabled:opacity-50"
+                          >
+                            {sendingReply ? "..." : "Reply"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyMessage("");
+                            }}
+                            className="text-xs text-foreground/40 hover:text-foreground/60"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setReplyingTo(item.id);
+                            setReplyMessage("");
+                          }}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Reply
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -4,7 +4,7 @@ import { slugify } from "@/lib/utils";
 export default async function MembersPage() {
   const { data: members, count } = await supabase
     .from("members")
-    .select("id, name, avatar_url, interests, joined_at", { count: "exact" })
+    .select("id, name, avatar_url, interests, joined_at, role", { count: "exact" })
     .order("joined_at", { ascending: false });
 
   const totalCount = count || members?.length || 0;
@@ -39,6 +39,11 @@ export default async function MembersPage() {
             <p className="font-display font-bold text-sm truncate">
               {member.name || "Member"}
             </p>
+            {member.role === "contributor" && (
+              <span className="inline-block text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 mt-1">
+                Contributor
+              </span>
+            )}
             {member.interests?.length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-2">
                 {member.interests.slice(0, 2).map((interest) => (

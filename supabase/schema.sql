@@ -23,6 +23,9 @@ create table members (
   -- Social links stored as JSONB array: [{ "label": "Twitter", "url": "..." }, ...]
   links jsonb default '[]'::jsonb,
 
+  -- Role: 'contributor' can reply to feedback, manage content
+  role text,
+
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -92,6 +95,15 @@ create table feedback (
   demo_slug text,       -- e.g. 'planet-onboarding'
   demo_step text,       -- e.g. 'chat'
   demo_step_title text, -- e.g. 'The payoff'
+  created_at timestamp with time zone default now()
+);
+
+-- Feedback replies (contributors only)
+create table feedback_replies (
+  id uuid primary key default gen_random_uuid(),
+  feedback_id uuid references feedback(id) on delete cascade not null,
+  member_id uuid references members(id) not null,
+  message text not null,
   created_at timestamp with time zone default now()
 );
 

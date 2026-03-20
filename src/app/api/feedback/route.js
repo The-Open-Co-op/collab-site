@@ -3,15 +3,27 @@ import nodemailer from "nodemailer";
 import { auth } from "@/auth";
 import { supabase } from "@/lib/supabase";
 
+async function getMember(email) {
+  const { data } = await supabase
+    .from("members")
+    .select("id, role")
+    .eq("email", email)
+    .limit(1)
+    .single();
+  return data;
+}
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const member = await getMember(session.user.email);
+
   const { data, error } = await supabase
     .from("feedback")
-    .select("*, members(name, avatar_url)")
+    .select("*, members(name, avatar_url), feedback_replies(*, members(name, avatar_url))")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -19,7 +31,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({ feedback: data, isContributor: member?.role === "contributor" });
 }
 
 export async function DELETE(req) {

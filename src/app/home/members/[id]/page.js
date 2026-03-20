@@ -75,6 +75,11 @@ export default async function MemberDetailPage({ params }) {
         <div>
           <h1 className="font-display text-2xl font-bold">
             {member.name || "Member"}
+            {member.role === "contributor" && (
+              <span className="ml-2 text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5 align-middle font-medium">
+                Contributor
+              </span>
+            )}
           </h1>
           {member.bio && (
             <p className="text-foreground/60 mt-1">{member.bio}</p>
