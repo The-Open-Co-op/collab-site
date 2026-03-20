@@ -26,7 +26,9 @@ export async function POST(req) {
       allowOverwrite: true,
     });
 
-    return NextResponse.json({ url: blob.url });
+    // Append timestamp to bust CDN/browser cache on re-uploads
+    const url = `${blob.url}?v=${Date.now()}`;
+    return NextResponse.json({ url });
   } catch (error) {
     console.error("Upload avatar error:", error.message, error.stack);
     return NextResponse.json({ error: error.message }, { status: 500 });
