@@ -621,19 +621,22 @@ export default function CollaborationStation({
           </h2>
           <div className="space-y-3">
             {/* Highlighted demo feedback CTA */}
-            <a
-              href="/demo/planet-onboarding"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-xl border-2 border-primary bg-white p-4 animate-pulse-border transition-colors hover:bg-primary/5"
-            >
-              <p className="text-sm font-medium">
-                View and feedback on the PLANET demo
-              </p>
-              <p className="text-xs text-foreground/50 mt-1">
-                See the latest designs and share your thoughts
-              </p>
-            </a>
+            <div className="group flex items-start gap-3 rounded-xl border-2 border-primary bg-white p-4 animate-pulse-border transition-colors hover:bg-primary/5">
+              <span className="mt-0.5 w-6 h-6 rounded-lg border-2 border-foreground/20 shrink-0 flex items-center justify-center" />
+              <div className="flex-1 min-w-0">
+                <a
+                  href="/demo/planet-onboarding"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-display font-bold text-sm hover:text-primary transition-colors"
+                >
+                  View and feedback on the PLANET demo
+                </a>
+                <p className="text-xs text-foreground/50 mt-1">
+                  See the latest designs and share your thoughts
+                </p>
+              </div>
+            </div>
 
             {tasks.length > 0 ? (
               tasks.map((task) => (
