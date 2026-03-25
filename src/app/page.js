@@ -154,12 +154,12 @@ export default async function Home() {
           </div>
 
           <a
-            href="/demo/planet-onboarding"
+            href="/demo"
             target="_blank"
             rel="noopener noreferrer"
             className="font-display inline-block mt-10 rounded-full border-2 border-primary px-8 py-3 text-primary font-medium hover:bg-primary hover:text-white transition-colors"
           >
-            Try the demo &rarr;
+            Try the demos &rarr;
           </a>
         </div>
       </section>
@@ -307,7 +307,7 @@ export default async function Home() {
                 Coded prototypes of the vault, contacts, chat, blogs, and other
                 apps that will plug into the trust infrastructure when it&apos;s
                 ready.{" "}
-                <a href="/demo/planet-onboarding" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Check out the current demo!</a>
+                <a href="/demo" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Check out the demos!</a>
               </p>
             </div>
             <div>

@@ -633,7 +633,7 @@ export default function CollaborationStation({
                   View and feedback on the PLANET demos
                 </a>
                 <p className="text-xs text-foreground/50 mt-1">
-                  Onboarding and Introducer app walkthroughs
+                  Onboarding, Main PNM and Introducer app walkthroughs
                 </p>
               </div>
             </div>
