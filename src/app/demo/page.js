@@ -1,4 +1,21 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function DemosPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleMessage(e) {
+      if (e.data?.type === "demo-navigate" && e.data.slug) {
+        router.push(`/demo/${e.data.slug}`);
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [router]);
+
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <iframe
