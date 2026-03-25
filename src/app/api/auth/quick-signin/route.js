@@ -10,7 +10,7 @@ const COLLECTIVE_SLUG = "open-coop";
 function mapOcTier(name) {
   const n = (name || "").toLowerCase();
   if (n.includes("catalyst")) return "catalyst";
-  if (n.includes("pioneer")) return "supporter";
+  if (n.includes("pioneer") || n.includes("supporter")) return "supporter";
   if (n.includes("free")) return "free";
   return n || "free";
 }
