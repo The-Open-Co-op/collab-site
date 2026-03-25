@@ -80,6 +80,11 @@ export default async function MemberDetailPage({ params }) {
                 Contributor
               </span>
             )}
+            {member.oc_tier === "supporter" && (
+              <span className="ml-2 text-xs bg-amber-500/10 text-amber-600 rounded-full px-2.5 py-0.5 align-middle font-medium">
+                Supporter
+              </span>
+            )}
           </h1>
           {member.bio && (
             <p className="text-foreground/60 mt-1">{member.bio}</p>
@@ -103,11 +108,6 @@ export default async function MemberDetailPage({ params }) {
               month: "long",
               year: "numeric",
             })}
-            {member.oc_tier && member.oc_tier !== "free" && (
-              <span className="ml-2 text-foreground/40">
-                &middot; {member.oc_tier} member
-              </span>
-            )}
           </p>
         </div>
       </div>

@@ -4,7 +4,15 @@ import DemoClient from "@/components/demo-client";
 const demos = {
   "planet-onboarding": {
     title: "PLANET Onboarding Demo",
-    url: "https://planet-sepia.vercel.app/#/demo",
+    url: "https://planet-sepia.vercel.app/#/demo/onboarding",
+  },
+  "planet-pnm": {
+    title: "PLANET Main PNM Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/pnm",
+  },
+  "planet-introducer": {
+    title: "PLANET Introducer Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/introducer",
   },
 };
 

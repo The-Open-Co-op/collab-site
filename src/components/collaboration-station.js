@@ -625,15 +625,15 @@ export default function CollaborationStation({
               <span className="mt-0.5 w-6 h-6 rounded-lg border-2 border-foreground/20 shrink-0 flex items-center justify-center" />
               <div className="flex-1 min-w-0">
                 <a
-                  href="/demo/planet-onboarding"
+                  href="/demo"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-display font-bold text-sm hover:text-primary transition-colors"
                 >
-                  View and feedback on the PLANET demo
+                  View and feedback on the PLANET demos
                 </a>
                 <p className="text-xs text-foreground/50 mt-1">
-                  See the latest designs and share your thoughts
+                  Onboarding and Introducer app walkthroughs
                 </p>
               </div>
             </div>
