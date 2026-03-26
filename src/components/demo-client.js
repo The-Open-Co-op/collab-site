@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DemoClient({ demoSlug, demoTitle, demoUrl, user }) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [demoStep, setDemoStep] = useState(null);
   const [message, setMessage] = useState("");
@@ -19,6 +21,13 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user }) {
           slug: e.data.slug || null,
           title: e.data.title || null,
         });
+      }
+      if (e.data?.type === "demo-navigate") {
+        if (e.data.slug) {
+          router.push(`/demo/${e.data.slug}`);
+        } else {
+          router.push("/demo");
+        }
       }
     }
     window.addEventListener("message", handleMessage);

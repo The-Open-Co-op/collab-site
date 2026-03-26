@@ -8,8 +8,12 @@ export default function DemosPage() {
 
   useEffect(() => {
     function handleMessage(e) {
-      if (e.data?.type === "demo-navigate" && e.data.slug) {
-        router.push(`/demo/${e.data.slug}`);
+      if (e.data?.type === "demo-navigate") {
+        if (e.data.slug) {
+          router.push(`/demo/${e.data.slug}`);
+        } else {
+          router.push("/demo");
+        }
       }
     }
     window.addEventListener("message", handleMessage);
