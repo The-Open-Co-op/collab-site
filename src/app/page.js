@@ -95,8 +95,20 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Quote */}
+      <section className="px-6 py-20 bg-white">
+        <div className="max-w-3xl mx-auto text-center">
+          <blockquote className="text-xl md:text-2xl leading-relaxed text-foreground/80 italic">
+            &ldquo;PLANET is certainly timely and potentially significant. We need better design principles to navigate these troubled times, with the emphasis on decentralised distribution rather than enshittified extraction!&rdquo;
+          </blockquote>
+          <p className="mt-6 font-display font-bold text-foreground/60">
+            Jonathon Porritt
+          </p>
+        </div>
+      </section>
+
       {/* What We're Building */}
-      <section id="building" className="px-6 py-24 bg-white">
+      <section id="building" className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-3xl font-bold mb-8">
             What is PLANET?
@@ -165,7 +177,7 @@ export default async function Home() {
       </section>
 
       {/* Why PLANET? */}
-      <section id="evidence" className="px-6 py-24">
+      <section id="evidence" className="px-6 py-24 bg-white">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-3xl font-bold mb-4">
             Why PLANET?
@@ -272,7 +284,7 @@ export default async function Home() {
       </section>
 
       {/* What We Need */}
-      <section className="px-6 py-24 bg-white">
+      <section className="px-6 py-24">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-2xl md:text-3xl font-bold mb-8 leading-snug">
             PLANET is a collaboration. We need you.
@@ -346,7 +358,7 @@ export default async function Home() {
       </section>
 
       {/* Join */}
-      <section id="join" className="px-6 py-24">
+      <section id="join" className="px-6 py-24 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 leading-snug">
             Membership is free. Support is welcome.<br /> Every voice is&nbsp;equal.
