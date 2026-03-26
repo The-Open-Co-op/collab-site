@@ -85,6 +85,11 @@ export default async function MemberDetailPage({ params }) {
                 Supporter
               </span>
             )}
+            {member.oc_tier === "catalyst" && (
+              <span className="ml-2 text-xs bg-violet-500/10 text-violet-600 rounded-full px-2.5 py-0.5 align-middle font-medium">
+                Catalyst
+              </span>
+            )}
           </h1>
           {member.bio && (
             <p className="text-foreground/60 mt-1">{member.bio}</p>

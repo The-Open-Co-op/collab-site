@@ -49,6 +49,11 @@ export default async function MembersPage() {
                 Supporter
               </span>
             )}
+            {member.oc_tier === "catalyst" && (
+              <span className="inline-block text-[10px] bg-violet-500/10 text-violet-600 rounded-full px-2 py-0.5 mt-1">
+                Catalyst
+              </span>
+            )}
             {member.interests?.length > 0 && (
               <div className="flex flex-wrap gap-1 justify-center mt-2">
                 {member.interests.slice(0, 2).map((interest) => (
