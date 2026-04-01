@@ -11,7 +11,7 @@ async function ocQuery(query, variables = {}) {
     method: "POST",
     headers,
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 300 }, // cache for 5 minutes
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -35,7 +35,7 @@ export async function getCollectiveStats() {
         stats {
           balance { value currency }
           yearlyBudget { value currency }
-          totalAmountReceived { value currency }
+          totalNetAmountReceived { value currency }
           contributorsCount
         }
       }
@@ -46,11 +46,11 @@ export async function getCollectiveStats() {
     return { balance: 0, yearlyBudget: 0, totalRaised: 0, currency: "GBP", memberCount: 0 };
   }
 
-  const { balance, yearlyBudget, totalAmountReceived, contributorsCount } = data.account.stats;
+  const { balance, yearlyBudget, totalNetAmountReceived, contributorsCount } = data.account.stats;
   return {
     balance: balance.value,
     yearlyBudget: yearlyBudget.value,
-    totalRaised: totalAmountReceived?.value || 0,
+    totalRaised: totalNetAmountReceived?.value || 0,
     currency: balance.currency,
     memberCount: contributorsCount,
   };
