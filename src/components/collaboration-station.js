@@ -640,7 +640,7 @@ export default function CollaborationStation({
   ).length;
 
   return (
-    <div className="lg:h-[calc(100vh-80px)] lg:flex lg:flex-col">
+    <div className="lg:h-[calc(100vh-52px)] lg:flex lg:flex-col">
       <h1 className="font-display text-3xl font-bold mb-1">
         {firstName ? `Hi, ${firstName}` : "Collaboration Station"}
       </h1>
