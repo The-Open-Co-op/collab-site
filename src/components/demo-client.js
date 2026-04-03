@@ -183,7 +183,6 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
           display: "flex",
           alignItems: "center",
           padding: "0 20px",
-          borderBottom: "1px solid #e5e7eb",
           fontWeight: 600,
           fontSize: 15,
           boxSizing: "border-box",

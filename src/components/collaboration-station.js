@@ -112,6 +112,42 @@ function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
   );
 }
 
+// ─── Demo CTA ───────────────────────────────────────────────
+function DemoCTA() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem("demo-cta-dismissed") === "1"; } catch { return false; }
+  });
+
+  if (dismissed) return null;
+
+  function handleDismiss() {
+    setDismissed(true);
+    try { localStorage.setItem("demo-cta-dismissed", "1"); } catch {}
+  }
+
+  return (
+    <div className="group flex items-start gap-3 rounded-xl border-2 border-primary bg-white p-4 animate-pulse-border transition-colors hover:bg-primary/5">
+      <button
+        onClick={handleDismiss}
+        className="mt-0.5 w-6 h-6 rounded-lg border-2 border-foreground/20 shrink-0 flex items-center justify-center transition-all duration-300 hover:border-primary group-hover:border-foreground/30"
+      />
+      <div className="flex-1 min-w-0">
+        <a
+          href="/demo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-display font-bold text-sm hover:text-primary transition-colors"
+        >
+          View and feedback on the PLANET demos
+        </a>
+        <p className="text-xs text-foreground/50 mt-1">
+          Onboarding, Main PNM and Introducer app walkthroughs
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Feed Item ──────────────────────────────────────────────
 function FeedItem({ item, isNew, isOwn, onUndo }) {
   return (
@@ -621,22 +657,7 @@ export default function CollaborationStation({
           </h2>
           <div className="space-y-3">
             {/* Highlighted demo feedback CTA */}
-            <div className="group flex items-start gap-3 rounded-xl border-2 border-primary bg-white p-4 animate-pulse-border transition-colors hover:bg-primary/5">
-              <span className="mt-0.5 w-6 h-6 rounded-lg border-2 border-foreground/20 shrink-0 flex items-center justify-center" />
-              <div className="flex-1 min-w-0">
-                <a
-                  href="/demo"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-display font-bold text-sm hover:text-primary transition-colors"
-                >
-                  View and feedback on the PLANET demos
-                </a>
-                <p className="text-xs text-foreground/50 mt-1">
-                  Onboarding, Main PNM and Introducer app walkthroughs
-                </p>
-              </div>
-            </div>
+            <DemoCTA />
 
             {tasks.length > 0 ? (
               tasks.map((task) => (
