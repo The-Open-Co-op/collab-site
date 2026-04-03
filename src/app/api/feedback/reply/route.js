@@ -50,7 +50,7 @@ export async function DELETE(req) {
     .limit(1)
     .single();
 
-  if (member?.role !== "contributor" && member?.role !== "core-team") {
+  if (member?.role !== "contributor" && member?.role !== "Core Team") {
     return NextResponse.json({ error: "Not authorised" }, { status: 403 });
   }
 

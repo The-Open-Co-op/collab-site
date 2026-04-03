@@ -39,7 +39,7 @@ export default async function DemoPage({ params }) {
       .eq("email", session.user.email)
       .limit(1)
       .single();
-    isContributor = member?.role === "contributor" || member?.role === "core-team";
+    isContributor = member?.role === "contributor" || member?.role === "Core Team";
   }
 
   return (
