@@ -15,8 +15,8 @@ export async function POST(req) {
     .limit(1)
     .single();
 
-  if (member?.role !== "contributor") {
-    return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+  if (!member) {
+    return NextResponse.json({ error: "Not a member" }, { status: 403 });
   }
 
   const { feedback_id, message } = await req.json();

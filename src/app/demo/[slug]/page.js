@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { supabase } from "@/lib/supabase";
 import DemoClient from "@/components/demo-client";
 
 const demos = {
@@ -30,12 +31,24 @@ export default async function DemoPage({ params }) {
 
   const session = await auth();
 
+  let isContributor = false;
+  if (session?.user?.email) {
+    const { data: member } = await supabase
+      .from("members")
+      .select("role")
+      .eq("email", session.user.email)
+      .limit(1)
+      .single();
+    isContributor = member?.role === "contributor";
+  }
+
   return (
     <DemoClient
       demoSlug={slug}
       demoTitle={demo.title}
       demoUrl={demo.url}
       user={session?.user || null}
+      isContributor={isContributor}
     />
   );
 }

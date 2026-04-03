@@ -13,19 +13,35 @@ async function getMember(email) {
   return data;
 }
 
-export async function GET() {
+export async function GET(req) {
   const session = await auth();
-  if (!session?.user?.email) {
+  const { searchParams } = new URL(req.url);
+  const demoSlug = searchParams.get("demo_slug");
+
+  // Demo feedback is public; general feedback requires auth
+  if (!demoSlug && !session?.user?.email) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const member = await getMember(session.user.email);
+  const member = session?.user?.email ? await getMember(session.user.email) : null;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("feedback")
     .select("*, members(name, avatar_url), feedback_replies(*, members(name, avatar_url))")
     .order("created_at", { ascending: false })
     .limit(100);
+
+  if (demoSlug) {
+    query = query.eq("demo_slug", demoSlug);
+    const demoStep = searchParams.get("demo_step");
+    if (demoStep) {
+      query = query.eq("demo_step", demoStep);
+    }
+  } else {
+    query = query.neq("category", "demo");
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -38,6 +54,11 @@ export async function DELETE(req) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const member = await getMember(session.user.email);
+  if (member?.role !== "contributor") {
+    return NextResponse.json({ error: "Not authorised" }, { status: 403 });
   }
 
   const { id } = await req.json();

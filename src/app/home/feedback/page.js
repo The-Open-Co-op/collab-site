@@ -299,8 +299,8 @@ export default function FeedbackPage() {
                     </div>
                   )}
 
-                  {/* Reply form (contributors only) */}
-                  {isContributor && (
+                  {/* Reply form */}
+                  {(
                     <div className="mt-3">
                       {replyingTo === item.id ? (
                         <div className="flex gap-2">
