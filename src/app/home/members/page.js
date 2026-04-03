@@ -39,6 +39,11 @@ export default async function MembersPage() {
             <p className="font-display font-bold text-sm truncate">
               {member.name || "Member"}
             </p>
+            {member.role === "core-team" && (
+              <span className="inline-block text-[10px] bg-emerald-500/10 text-emerald-700 rounded-full px-2 py-0.5 mt-1">
+                Core Team
+              </span>
+            )}
             {member.role === "contributor" && (
               <span className="inline-block text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 mt-1">
                 Contributor

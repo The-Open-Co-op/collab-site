@@ -47,7 +47,8 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ feedback: data, isContributor: member?.role === "contributor" });
+  const isContributor = member?.role === "contributor" || member?.role === "core-team";
+  return NextResponse.json({ feedback: data, isContributor });
 }
 
 export async function DELETE(req) {
@@ -57,7 +58,7 @@ export async function DELETE(req) {
   }
 
   const member = await getMember(session.user.email);
-  if (member?.role !== "contributor") {
+  if (member?.role !== "contributor" && member?.role !== "core-team") {
     return NextResponse.json({ error: "Not authorised" }, { status: 403 });
   }
 
