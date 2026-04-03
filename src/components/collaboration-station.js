@@ -40,7 +40,7 @@ function MemberLink({ name, memberId }) {
 }
 
 // ─── Task Item ──────────────────────────────────────────────
-function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
+function TaskItem({ task, onComplete, isCompleted, isPersistent, highlighted }) {
   const [completing, setCompleting] = useState(false);
   const [checked, setChecked] = useState(isCompleted);
 
@@ -54,9 +54,9 @@ function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
 
   return (
     <div
-      className={`group flex items-start gap-3 rounded-xl border border-foreground/10 bg-white p-4 transition-all duration-500 ${
-        checked && !isPersistent ? "opacity-0 translate-x-full" : ""
-      }`}
+      className={`group flex items-start gap-3 rounded-xl bg-white p-4 transition-all duration-500 ${
+        highlighted ? "border-2 border-primary" : "border border-foreground/10"
+      } ${checked && !isPersistent ? "opacity-0 translate-x-full" : ""}`}
     >
       <button
         onClick={handleCheck}
@@ -107,42 +107,6 @@ function TaskItem({ task, onComplete, isCompleted, isPersistent }) {
             GitHub
           </span>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Demo CTA ───────────────────────────────────────────────
-function DemoCTA() {
-  const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem("demo-cta-dismissed") === "1"; } catch { return false; }
-  });
-
-  if (dismissed) return null;
-
-  function handleDismiss() {
-    setDismissed(true);
-    try { localStorage.setItem("demo-cta-dismissed", "1"); } catch {}
-  }
-
-  return (
-    <div className="group flex items-start gap-3 rounded-xl border-2 border-primary bg-white p-4 animate-pulse-border transition-colors hover:bg-primary/5">
-      <button
-        onClick={handleDismiss}
-        className="mt-0.5 w-6 h-6 rounded-lg border-2 border-foreground/20 shrink-0 flex items-center justify-center transition-all duration-300 hover:border-primary group-hover:border-foreground/30"
-      />
-      <div className="flex-1 min-w-0">
-        <a
-          href="/demo"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-display font-bold text-sm hover:text-primary transition-colors"
-        >
-          View and feedback on the PLANET demos
-        </a>
-        <p className="text-xs text-foreground/50 mt-1">
-          Onboarding, Main PNM and Introducer app walkthroughs
-        </p>
       </div>
     </div>
   );
@@ -656,17 +620,15 @@ export default function CollaborationStation({
             Things You Can Do
           </h2>
           <div className="space-y-3">
-            {/* Highlighted demo feedback CTA */}
-            <DemoCTA />
-
             {tasks.length > 0 ? (
-              tasks.map((task) => (
+              [...tasks].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((task) => (
                 <TaskItem
                   key={task.id}
                   task={task}
                   onComplete={handleTaskComplete}
                   isCompleted={completedIds.has(task.id)}
                   isPersistent={task.is_persistent}
+                  highlighted={task.sort_order < 0}
                 />
               ))
             ) : (

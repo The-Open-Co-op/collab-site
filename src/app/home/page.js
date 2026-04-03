@@ -121,6 +121,23 @@ export default async function DashboardPage() {
     .eq("title", "Email 3 people you trust to join The Open Co-op")
     .is("url", null);
 
+  // One-time: ensure demo feedback task exists
+  if (!tasks.some((t) => t.title === "View and feedback on the PLANET demos")) {
+    const { data: newTask } = await supabase
+      .from("tasks")
+      .insert({
+        title: "View and feedback on the PLANET demos",
+        description: "Onboarding, Main PNM and Introducer app walkthroughs",
+        url: "/demo",
+        category: "product",
+        is_universal: true,
+        sort_order: -1,
+      })
+      .select()
+      .single();
+    if (newTask) tasks.push(newTask);
+  }
+
   // One-time: map legacy "pioneer" tier to "supporter"
   await supabase
     .from("members")
