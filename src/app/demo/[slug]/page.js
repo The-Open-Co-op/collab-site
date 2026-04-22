@@ -4,7 +4,7 @@ import DemoClient from "@/components/demo-client";
 
 const demos = {
   "planet-onboarding": {
-    title: "PLANET Onboarding Demo",
+    title: "PLANET App Store Onboarding Demo — OLD",
     url: "https://planet-sepia.vercel.app/#/demo/onboarding",
   },
   "planet-pwa-onboarding": {
