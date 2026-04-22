@@ -7,6 +7,10 @@ const demos = {
     title: "PLANET Onboarding Demo",
     url: "https://planet-sepia.vercel.app/#/demo/onboarding",
   },
+  "planet-pwa-onboarding": {
+    title: "PLANET PWA Onboarding Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/pwa-onboarding",
+  },
   "planet-pnm": {
     title: "PLANET Main PNM Demo",
     url: "https://planet-sepia.vercel.app/#/demo/pnm",
