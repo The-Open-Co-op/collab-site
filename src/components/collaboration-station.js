@@ -728,6 +728,7 @@ export default function CollaborationStation({
       {/* Quick links */}
       <div className="mt-2 shrink-0 flex flex-wrap justify-center gap-4 text-sm">
         {[
+          { label: "PLANET demos", href: "/demo" },
           { label: "Member Handbook", href: "/The-Open-Co-op-Group-Handbook.pdf" },
           { label: "Docs", href: "https://docs.open.coop" },
           {
