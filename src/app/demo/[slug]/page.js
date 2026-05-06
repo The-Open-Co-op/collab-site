@@ -19,6 +19,10 @@ const demos = {
     title: "PLANET Introducer Demo",
     url: "https://planet-sepia.vercel.app/#/demo/introducer",
   },
+  "planet-invite-flow": {
+    title: "PLANET Invite Flow Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/invite-flow",
+  },
 };
 
 export default async function DemoPage({ params }) {
