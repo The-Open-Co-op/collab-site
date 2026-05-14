@@ -23,6 +23,10 @@ const demos = {
     title: "PLANET Invite Flow Demo",
     url: "https://planet-sepia.vercel.app/#/demo/invite-flow",
   },
+  "planet-blog": {
+    title: "PLANET Blog (FPP) Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/blog",
+  },
 };
 
 export default async function DemoPage({ params }) {
