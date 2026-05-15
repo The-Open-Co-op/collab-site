@@ -27,6 +27,10 @@ const demos = {
     title: "PLANET Blog (FPP) Demo",
     url: "https://planet-sepia.vercel.app/#/demo/blog",
   },
+  "planet-feeds": {
+    title: "PLANET Feeds Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/feeds",
+  },
 };
 
 export default async function DemoPage({ params }) {
