@@ -154,6 +154,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
   }
 
   const stepLabel = demoStep?.title ? `Step: ${demoStep.title}` : null;
+  const isFeedbackStep = demoStep?.slug === "feedback";
 
   return (
     <div style={{ display: "flex", width: "100vw", height: "100vh" }}>
@@ -167,7 +168,8 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
         />
       </div>
 
-      {/* Feedback panel */}
+      {/* Feedback panel — hidden on the built-in feedback screen */}
+      {isFeedbackStep ? null :
       <div
         style={{
           width: 320,
@@ -496,7 +498,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
