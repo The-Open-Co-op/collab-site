@@ -66,6 +66,9 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
   useEffect(() => {
     if (demoStep) {
       loadFeedback(demoStep.slug);
+    } else {
+      const timer = setTimeout(() => loadFeedback(), 1500);
+      return () => clearTimeout(timer);
     }
   }, [demoSlug, demoStep?.slug]);
 
