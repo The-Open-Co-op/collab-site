@@ -47,9 +47,10 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
     return () => window.removeEventListener("message", handleMessage);
   }, [router]);
 
-  async function loadFeedback() {
+  async function loadFeedback(step) {
     try {
-      const url = `/api/feedback?demo_slug=${encodeURIComponent(demoSlug)}`;
+      let url = `/api/feedback?demo_slug=${encodeURIComponent(demoSlug)}`;
+      if (step) url += `&demo_step=${encodeURIComponent(step)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -63,8 +64,10 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
   }
 
   useEffect(() => {
-    loadFeedback();
-  }, [demoSlug]);
+    if (demoStep) {
+      loadFeedback(demoStep.slug);
+    }
+  }, [demoSlug, demoStep?.slug]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -90,7 +93,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
       }
 
       setMessage("");
-      loadFeedback();
+      loadFeedback(demoStep?.slug);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -110,7 +113,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
       if (res.ok) {
         setReplyMessage("");
         setReplyingTo(null);
-        loadFeedback();
+        loadFeedback(demoStep?.slug);
       }
     } catch {
       // silent
@@ -144,7 +147,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: replyId }),
       });
-      loadFeedback();
+      loadFeedback(demoStep?.slug);
     } catch {
       // silent
     }
@@ -246,12 +249,6 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
                         {formatDate(item.created_at)}
                       </span>
                     </div>
-
-                    {item.demo_step_title && (
-                      <span style={{ fontSize: 10, color: "#999", display: "block", marginBottom: 2 }}>
-                        Step: {item.demo_step_title}
-                      </span>
-                    )}
 
                     {/* Message */}
                     <p style={{ fontSize: 13, color: "#444", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
