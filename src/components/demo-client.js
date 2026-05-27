@@ -12,9 +12,9 @@ function formatDate(dateStr) {
   });
 }
 
-export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContributor }) {
+export default function DemoClient({ demoSlug, demoTitle, demoUrl, firstStep, user, isContributor }) {
   const router = useRouter();
-  const [demoStep, setDemoStep] = useState(null);
+  const [demoStep, setDemoStep] = useState(firstStep || null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -66,9 +66,6 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
   useEffect(() => {
     if (demoStep) {
       loadFeedback(demoStep.slug);
-    } else {
-      const timer = setTimeout(() => loadFeedback(), 1500);
-      return () => clearTimeout(timer);
     }
   }, [demoSlug, demoStep?.slug]);
 
