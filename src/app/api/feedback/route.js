@@ -56,14 +56,24 @@ export async function DELETE(req) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const member = await getMember(session.user.email);
-  if (member?.role !== "core team") {
-    return NextResponse.json({ error: "Not authorised" }, { status: 403 });
-  }
-
   const { id } = await req.json();
   if (!id) {
     return NextResponse.json({ error: "ID required" }, { status: 400 });
+  }
+
+  const member = await getMember(session.user.email);
+  const isContributor = member?.role === "core team";
+
+  if (!isContributor) {
+    const { data: feedback } = await supabase
+      .from("feedback")
+      .select("email")
+      .eq("id", id)
+      .single();
+
+    if (feedback?.email !== session.user.email) {
+      return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+    }
   }
 
   const { error } = await supabase.from("feedback").delete().eq("id", id);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 import { auth } from "@/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -32,6 +33,49 @@ export async function POST(req) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Notify the original commenter by email
+  try {
+    const { data: feedback } = await supabase
+      .from("feedback")
+      .select("email, message, demo_slug")
+      .eq("id", feedback_id)
+      .single();
+
+    if (feedback?.email && feedback.email !== session.user.email) {
+      const replierName = data.members?.name || "Someone";
+      const demoLabel = feedback.demo_slug ? ` on ${feedback.demo_slug}` : "";
+
+      const transporter = nodemailer.createTransport({
+        host: "smtp-relay.brevo.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.BREVO_SMTP_USER,
+          pass: process.env.BREVO_SMTP_KEY,
+        },
+      });
+
+      await transporter.sendMail({
+        from: "Collab <info@open.coop>",
+        to: feedback.email,
+        subject: `${replierName} replied to your feedback${demoLabel}`,
+        text: [
+          `${replierName} replied to your feedback${demoLabel}:`,
+          "",
+          `"${message}"`,
+          "",
+          "---",
+          "Your original comment:",
+          feedback.message,
+          "",
+          "View the demo: https://collab.open.coop/demo/" + (feedback.demo_slug || ""),
+        ].join("\n"),
+      });
+    }
+  } catch (err) {
+    console.error("Reply notification email error:", err.message);
   }
 
   return NextResponse.json(data);

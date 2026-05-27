@@ -47,10 +47,9 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
     return () => window.removeEventListener("message", handleMessage);
   }, [router]);
 
-  async function loadFeedback(step) {
+  async function loadFeedback() {
     try {
-      let url = `/api/feedback?demo_slug=${encodeURIComponent(demoSlug)}`;
-      if (step) url += `&demo_step=${encodeURIComponent(step)}`;
+      const url = `/api/feedback?demo_slug=${encodeURIComponent(demoSlug)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -64,8 +63,8 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
   }
 
   useEffect(() => {
-    loadFeedback(demoStep?.slug);
-  }, [demoSlug, demoStep?.slug]);
+    loadFeedback();
+  }, [demoSlug]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -91,7 +90,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
       }
 
       setMessage("");
-      loadFeedback(demoStep?.slug);
+      loadFeedback();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -111,7 +110,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
       if (res.ok) {
         setReplyMessage("");
         setReplyingTo(null);
-        loadFeedback(demoStep?.slug);
+        loadFeedback();
       }
     } catch {
       // silent
@@ -145,7 +144,7 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: replyId }),
       });
-      loadFeedback(demoStep?.slug);
+      loadFeedback();
     } catch {
       // silent
     }
@@ -247,6 +246,12 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
                         {formatDate(item.created_at)}
                       </span>
                     </div>
+
+                    {item.demo_step_title && (
+                      <span style={{ fontSize: 10, color: "#999", display: "block", marginBottom: 2 }}>
+                        Step: {item.demo_step_title}
+                      </span>
+                    )}
 
                     {/* Message */}
                     <p style={{ fontSize: 13, color: "#444", margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
@@ -366,7 +371,24 @@ export default function DemoClient({ demoSlug, demoTitle, demoUrl, user, isContr
                             >
                               Reply
                             </button>
-                            {isContributor && (
+                            {user.email === item.email && (
+                              <button
+                                onClick={() => handleResolve(item.id)}
+                                disabled={resolving === item.id}
+                                style={{
+                                  fontSize: 12,
+                                  color: "#ef4444",
+                                  background: "none",
+                                  border: "none",
+                                  cursor: resolving === item.id ? "default" : "pointer",
+                                  padding: 0,
+                                  opacity: resolving === item.id ? 0.5 : 1,
+                                }}
+                              >
+                                {resolving === item.id ? "Deleting..." : "Delete"}
+                              </button>
+                            )}
+                            {isContributor && user.email !== item.email && (
                               <button
                                 onClick={() => handleResolve(item.id)}
                                 disabled={resolving === item.id}
