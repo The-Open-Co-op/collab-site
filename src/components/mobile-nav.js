@@ -44,6 +44,7 @@ export default function MobileNav({ navItems, email }) {
             <Link
               key={item.href}
               href={item.href}
+              {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               onClick={() => setOpen(false)}
               className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
                 pathname === item.href

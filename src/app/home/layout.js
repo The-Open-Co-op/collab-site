@@ -6,6 +6,7 @@ import MobileNav from "@/components/mobile-nav";
 
 const navItems = [
   { href: "/home", label: "Dashboard" },
+  { href: "/demo", label: "Demos", external: true },
   { href: "/home/members", label: "Members" },
   { href: "/home/feedback", label: "Feedback" },
 ];
@@ -29,6 +30,7 @@ export default async function HomeLayout({ children }) {
             <Link
               key={item.href}
               href={item.href}
+              {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
               className="block rounded-lg px-3 py-2 text-sm hover:bg-foreground/5 transition-colors"
             >
               {item.label}
