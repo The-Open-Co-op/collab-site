@@ -29,6 +29,8 @@ export async function GET(req) {
     .from("feedback")
     .select("*, members(name, avatar_url), feedback_replies(*, members(name, avatar_url))")
     .order("created_at", { ascending: false })
+    // Replies oldest-first so the most recent reply sits at the bottom of the thread.
+    .order("created_at", { referencedTable: "feedback_replies", ascending: true })
     .limit(100);
 
   if (demoSlug) {
