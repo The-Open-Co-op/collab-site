@@ -38,6 +38,11 @@ const demos = {
     url: "https://planet-sepia.vercel.app/#/demo/feeds",
     firstStep: { slug: "install", title: "Install Feeds" },
   },
+  "planet-trust-layer": {
+    title: "PLANET Trust Layer Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/trust-layer",
+    firstStep: { slug: "intro", title: "Intro" },
+  },
 };
 
 export default async function DemoPage({ params }) {
