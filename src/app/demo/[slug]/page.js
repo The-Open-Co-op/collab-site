@@ -38,6 +38,11 @@ const demos = {
     url: "https://planet-sepia.vercel.app/#/demo/feeds",
     firstStep: { slug: "install", title: "Install Feeds" },
   },
+  "family-vault": {
+    title: "Family Vault Demo",
+    url: "https://planet-sepia.vercel.app/#/demo/family-vault",
+    firstStep: { slug: "home", title: "The family's vault" },
+  },
   "planet-trust-layer": {
     title: "PLANET Trust Layer Demo",
     url: "https://planet-sepia.vercel.app/#/demo/trust-layer",
