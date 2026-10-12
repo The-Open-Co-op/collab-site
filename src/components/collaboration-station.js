@@ -176,10 +176,12 @@ function ContactIcon({ memberId, name }) {
 }
 
 // ─── Help Request Item ──────────────────────────────────────
-function HelpRequestItem({ request, memberId, onReply, onDelete }) {
+function HelpRequestItem({ request, memberId, isAdmin, onReply, onDelete, onDeleteReply }) {
   const [replying, setReplying] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
   const hasReplied = request.help_replies?.some(
-    (r) => r.member_id === memberId
+    (r) => r.member_id === memberId && !r.message
   );
   const isOwn = request.member_id === memberId;
 
@@ -187,6 +189,16 @@ function HelpRequestItem({ request, memberId, onReply, onDelete }) {
     setReplying(true);
     await onReply(request.id);
     setReplying(false);
+  }
+
+  async function handleSendReply(e) {
+    e.preventDefault();
+    const text = replyText.trim();
+    if (!text) return;
+    setSending(true);
+    await onReply(request.id, text);
+    setReplyText("");
+    setSending(false);
   }
 
   return (
@@ -206,13 +218,25 @@ function HelpRequestItem({ request, memberId, onReply, onDelete }) {
           {request.help_replies?.length > 0 && (
             <div className="mt-2 space-y-1">
               {request.help_replies.map((reply) => (
-                <p key={reply.id} className="text-xs text-foreground/50">
+                <p key={reply.id} className="text-xs text-foreground/50 group">
                   <MemberLink
                     name={reply.members?.name}
                     memberId={reply.member_id}
                   />{" "}
-                  can help
+                  {reply.message ? (
+                    <span className="text-foreground/70">{reply.message}</span>
+                  ) : (
+                    "can help"
+                  )}
                   <ContactIcon memberId={reply.member_id} name={reply.members?.name} />
+                  {(isAdmin || reply.member_id === memberId) && (
+                    <button
+                      onClick={() => onDeleteReply(request.id, reply.id)}
+                      className="ml-2 text-foreground/25 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </p>
               ))}
             </div>
@@ -230,7 +254,7 @@ function HelpRequestItem({ request, memberId, onReply, onDelete }) {
                 I can help
               </button>
             )}
-            {isOwn && (
+            {(isOwn || isAdmin) && (
               <button
                 onClick={() => onDelete(request.id)}
                 className="text-xs text-foreground/30 hover:text-primary transition-colors"
@@ -239,6 +263,23 @@ function HelpRequestItem({ request, memberId, onReply, onDelete }) {
               </button>
             )}
           </div>
+
+          <form onSubmit={handleSendReply} className="mt-2 flex gap-2">
+            <input
+              type="text"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Reply..."
+              className="flex-1 min-w-0 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs placeholder:text-foreground/40 focus:border-primary focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={sending || !replyText.trim()}
+              className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark transition-colors disabled:opacity-40"
+            >
+              {sending ? "..." : "Reply"}
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -559,13 +600,9 @@ export default function CollaborationStation({
     });
   }
 
-  // Help reply handler
-  async function handleHelpReply(requestId) {
-    await fetch("/api/help-requests/reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ helpRequestId: requestId }),
-    });
+  // Help reply handler — no message is the "I can help" flag, text is a reply
+  async function handleHelpReply(requestId, message) {
+    const tempId = `temp-${Date.now()}`;
     // Optimistic update
     setHelpRequests((prev) =>
       prev.map((r) =>
@@ -574,12 +611,59 @@ export default function CollaborationStation({
               ...r,
               help_replies: [
                 ...(r.help_replies || []),
-                { id: "temp", member_id: member.id, members: { name: member.name } },
+                {
+                  id: tempId,
+                  member_id: member.id,
+                  message: message || null,
+                  members: { name: member.name },
+                },
               ],
             }
           : r
       )
     );
+
+    const res = await fetch("/api/help-requests/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ helpRequestId: requestId, message }),
+    });
+
+    // Swap in the real id so the reply can be deleted without a refresh
+    const data = res.ok ? await res.json().catch(() => null) : null;
+    if (data?.id) {
+      setHelpRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestId
+            ? {
+                ...r,
+                help_replies: (r.help_replies || []).map((reply) =>
+                  reply.id === tempId ? { ...reply, id: data.id } : reply
+                ),
+              }
+            : r
+        )
+      );
+    }
+  }
+
+  // Help reply delete handler (own reply, or anything for core team)
+  async function handleHelpReplyDelete(requestId, replyId) {
+    setHelpRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestId
+          ? {
+              ...r,
+              help_replies: (r.help_replies || []).filter((reply) => reply.id !== replyId),
+            }
+          : r
+      )
+    );
+    await fetch("/api/help-requests/reply", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: replyId }),
+    });
   }
 
   // Help request delete handler
@@ -694,8 +778,10 @@ export default function CollaborationStation({
                   key={request.id}
                   request={request}
                   memberId={member?.id}
+                  isAdmin={member?.role === "core team"}
                   onReply={handleHelpReply}
                   onDelete={handleHelpDelete}
+                  onDeleteReply={handleHelpReplyDelete}
                 />
               ))
             ) : (

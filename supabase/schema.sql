@@ -79,10 +79,11 @@ create table help_requests (
 -- Help replies ("I can help")
 create table help_replies (
   id uuid primary key default gen_random_uuid(),
-  help_request_id uuid references help_requests(id) not null,
+  help_request_id uuid references help_requests(id) on delete cascade not null,
   member_id uuid references members(id) not null,
-  created_at timestamp with time zone default now(),
-  unique(help_request_id, member_id)
+  -- null message = the "I can help" flag; text = an inline reply
+  message text,
+  created_at timestamp with time zone default now()
 );
 
 -- Feedback

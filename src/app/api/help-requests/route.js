@@ -53,7 +53,7 @@ export async function DELETE(req) {
 
   const { data: member } = await supabase
     .from("members")
-    .select("id")
+    .select("id, role")
     .eq("email", session.user.email)
     .limit(1)
     .single();
@@ -62,12 +62,17 @@ export async function DELETE(req) {
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
-  // Only allow deleting own requests
-  await supabase
-    .from("help_requests")
-    .delete()
-    .eq("id", id)
-    .eq("member_id", member.id);
+  // Your own request, or anything if you're core team.
+  let query = supabase.from("help_requests").delete().eq("id", id);
+  if (member.role !== "core team") {
+    query = query.eq("member_id", member.id);
+  }
+
+  const { error } = await query;
+  if (error) {
+    console.error("Help request delete error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }
