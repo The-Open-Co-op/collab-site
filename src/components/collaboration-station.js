@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createBrowserClient } from "@/lib/supabase";
 
 function formatCurrency(value, currency = "GBP") {
@@ -388,6 +388,10 @@ export default function CollaborationStation({
   ocContributions,
   firstName,
 }) {
+  const membersById = useMemo(
+    () => new Map((allMembers || []).map((m) => [m.id, m])),
+    [allMembers]
+  );
   const [tasks, setTasks] = useState(initialTasks);
   const [completedIds, setCompletedIds] = useState(new Set(initialCompleted));
   const [helpRequests, setHelpRequests] = useState(initialHelpRequests);
@@ -458,12 +462,60 @@ export default function CollaborationStation({
           });
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "help_replies" },
+        (payload) => {
+          const reply = payload.new;
+          setHelpRequests((prev) =>
+            prev.map((r) => {
+              if (r.id !== reply.help_request_id) return r;
+              const replies = r.help_replies || [];
+              // Our own replies are already in state optimistically.
+              if (replies.some((x) => x.id === reply.id)) return r;
+              return {
+                ...r,
+                help_replies: [
+                  ...replies,
+                  {
+                    ...reply,
+                    members: {
+                      name: membersById.get(reply.member_id)?.name || null,
+                    },
+                  },
+                ],
+              };
+            })
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "help_replies" },
+        (payload) => {
+          setHelpRequests((prev) =>
+            prev.map((r) => ({
+              ...r,
+              help_replies: (r.help_replies || []).filter(
+                (x) => x.id !== payload.old.id
+              ),
+            }))
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "help_requests" },
+        (payload) => {
+          setHelpRequests((prev) => prev.filter((r) => r.id !== payload.old.id));
+        }
+      )
       .subscribe();
 
     return () => {
       sb.removeChannel(channel);
     };
-  }, []);
+  }, [membersById]);
 
   // Remove a task from the list and replace with next available
   const removeTask = useCallback(
