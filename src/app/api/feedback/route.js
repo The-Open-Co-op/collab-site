@@ -86,23 +86,76 @@ export async function DELETE(req) {
   return NextResponse.json({ ok: true });
 }
 
+/**
+ * Simple in-memory per-IP throttle for the one publicly postable category.
+ * Resets on cold start — enough to stop a script hammering the endpoint,
+ * not a substitute for a real rate limiter if abuse continues.
+ */
+const JOIN_POST_WINDOW_MS = 60 * 60 * 1000;
+const JOIN_POST_LIMIT = 3;
+const joinPostLog = new Map();
+
+function joinRateLimited(ip) {
+  const now = Date.now();
+  const recent = (joinPostLog.get(ip) || []).filter((t) => now - t < JOIN_POST_WINDOW_MS);
+  if (recent.length >= JOIN_POST_LIMIT) {
+    joinPostLog.set(ip, recent);
+    return true;
+  }
+  recent.push(now);
+  joinPostLog.set(ip, recent);
+  // Keep the map from growing without bound on a long-lived instance.
+  if (joinPostLog.size > 5000) {
+    for (const [key, times] of joinPostLog) {
+      if (!times.some((t) => now - t < JOIN_POST_WINDOW_MS)) joinPostLog.delete(key);
+    }
+  }
+  return false;
+}
+
 export async function POST(req) {
   const session = await auth();
-  const { category, message, demo_slug, demo_step, demo_step_title } = await req.json();
+  const body = await req.json();
+  const { category, message, demo_slug, demo_step, demo_step_title } = body;
 
   if (!message) {
     return NextResponse.json({ error: "Message required" }, { status: 400 });
   }
 
-  const email = session?.user?.email;
+  // Everything except the join flow is posted from logged-in UI (the members'
+  // feedback page, and the demo panel, which only shows its form to members).
+  // The page gating doesn't protect this route handler, so enforce it here.
+  const isJoinFeedback = category === "join-feedback";
+  if (!session?.user?.email && !isJoinFeedback) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  if (isJoinFeedback) {
+    // Honeypot: a real browser leaves this hidden field empty.
+    if (body.website) {
+      return NextResponse.json({ ok: true });
+    }
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+    if (joinRateLimited(ip)) {
+      return NextResponse.json({ error: "Too many submissions" }, { status: 429 });
+    }
+  }
+
+  // Signed-in identity wins; the join form may supply one for a visitor.
+  const bodyEmail = typeof body.email === "string" ? body.email.trim() : "";
+  const email =
+    session?.user?.email || (isJoinFeedback && bodyEmail.includes("@") ? bodyEmail : undefined);
 
   // Look up member ID if authenticated
   let memberId = null;
-  if (email) {
+  if (session?.user?.email) {
     const { data: member } = await supabase
       .from("members")
       .select("id")
-      .eq("email", email)
+      .eq("email", session.user.email)
       .limit(1)
       .single();
     memberId = member?.id;
@@ -135,12 +188,32 @@ export async function POST(req) {
       },
     });
 
+    // Where it was posted, and the page to reply on — so the notification
+    // says which form this came from and links straight back to the thread.
+    const where = demo_slug
+      ? `Demo feedback panel — ${demo_slug}${demo_step_title ? ` · ${demo_step_title}` : ""}`
+      : category === "join-feedback"
+        ? "Join flow feedback form"
+        : `Members' feedback page${category ? ` — ${category}` : ""}`;
+    const replyUrl = demo_slug
+      ? `https://collab.open.coop/demo/${demo_slug}`
+      : "https://collab.open.coop/home/feedback";
+
     await transporter.sendMail({
       from: "Collab <info@open.coop>",
       ...(email && { replyTo: email }),
       to: "info@open.coop",
       subject: `Collab feedback${category ? ` [${category}]` : ""}${demo_slug ? ` — ${demo_slug}` : ""}`,
-      text: `From: ${email || "anonymous"}\nCategory: ${category || "none"}${demo_slug ? `\nDemo: ${demo_slug}` : ""}${demo_step_title ? `\nStep: ${demo_step_title}` : ""}\n\n${message}`,
+      text: [
+        `From: ${email || "anonymous"}`,
+        `Posted on: ${where}`,
+        "",
+        message,
+        "",
+        "---",
+        "Reply on Collab — your reply is saved in the thread and emailed to them:",
+        replyUrl,
+      ].join("\n"),
     });
   } catch (err) {
     console.error("Feedback email error:", err.message);

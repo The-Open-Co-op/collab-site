@@ -70,7 +70,9 @@ export async function POST(req) {
           "Your original comment:",
           feedback.message,
           "",
-          "View the demo: https://collab.open.coop/demo/" + (feedback.demo_slug || ""),
+          feedback.demo_slug
+            ? `View the demo: https://collab.open.coop/demo/${feedback.demo_slug}`
+            : "See the thread: https://collab.open.coop/home/feedback",
         ].join("\n"),
       });
     }

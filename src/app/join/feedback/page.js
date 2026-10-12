@@ -4,6 +4,8 @@ import { useState } from "react";
 
 export default function JoinFeedbackPage() {
   const [email, setEmail] = useState("");
+  // Honeypot: hidden from people, irresistible to form-filling bots.
+  const [website, setWebsite] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -23,6 +25,7 @@ export default function JoinFeedbackPage() {
           category: "join-feedback",
           message: message.trim(),
           ...(email.trim() && { email: email.trim() }),
+          website, // honeypot — bots fill it in, people never see it
         }),
       });
 
@@ -69,6 +72,17 @@ export default function JoinFeedbackPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-10">
+          {/* Honeypot — off-screen and skipped by keyboard/screen readers. */}
+          <input
+            type="text"
+            name="website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute left-[-9999px] h-0 w-0 opacity-0"
+          />
           <input
             type="email"
             value={email}
