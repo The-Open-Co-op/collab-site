@@ -294,8 +294,12 @@ export default async function Home() {
             vision and want to contribute what they can.
           </p>
           <p className="text-lg leading-relaxed text-foreground/80 mb-10 font-medium">
-            We&apos;re targeting a beta launch in late 2026. Between now and
-            then, there&apos;s a lot to build.
+            We&apos;re aiming to pilot the OpenVTC trust infrastructure with
+            members of The Open Co-op in late 2026 / early 2027. It will be
+            one of the first real-world tests of decentralised identity and
+            verifiable trust in a member-owned community.{' '}
+            <a href="#join" className="text-primary hover:underline font-bold">Sign up now to be part of it</a>,
+            and there&apos;s plenty to build between now and then.
           </p>
           <p className="text-lg leading-relaxed text-foreground/80 mb-10 font-medium">
             Right now, we&apos;re:
