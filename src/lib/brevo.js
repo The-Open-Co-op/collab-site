@@ -24,6 +24,7 @@ export async function addBrevoContact({ email, name, tier }) {
           LASTNAME: lastName || "",
           ...(tier && { OC_TIER: tier }),
         },
+        listIds: [3],
         updateEnabled: true,
       }),
     });
