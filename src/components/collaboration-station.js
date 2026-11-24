@@ -243,7 +243,7 @@ function HelpRequestItem({ request, memberId, isAdmin, onReply, onDelete, onDele
             />
             <ContactIcon memberId={request.member_id} name={request.members?.name} />
             {" "}
-            <span className="text-foreground/70">{request.description}</span>
+            <span className="text-foreground/70"><Linkify text={request.description} /></span>
           </p>
           {request.help_replies?.length > 0 && (
             <div className="mt-2 space-y-1">
@@ -254,7 +254,7 @@ function HelpRequestItem({ request, memberId, isAdmin, onReply, onDelete, onDele
                     memberId={reply.member_id}
                   />{" "}
                   {reply.message ? (
-                    <span className="text-foreground/70">{reply.message}</span>
+                    <span className="text-foreground/70"><Linkify text={reply.message} /></span>
                   ) : (
                     "can help"
                   )}
