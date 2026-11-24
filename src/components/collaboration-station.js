@@ -27,6 +27,36 @@ function slugify(str) {
   return (str || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+// Turns http(s):// and www. URLs in plain text into clickable links.
+// Trailing punctuation (e.g. a full stop after a URL) stays outside the link.
+const URL_PATTERN = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+const TRAILING_PUNCTUATION = /[.,;:!?)\]'"]+$/;
+
+function Linkify({ text }) {
+  if (!text) return null;
+  return String(text)
+    .split(URL_PATTERN)
+    .map((part, i) => {
+      if (i % 2 === 0) return part;
+      const trailing = part.match(TRAILING_PUNCTUATION)?.[0] || "";
+      const url = trailing ? part.slice(0, -trailing.length) : part;
+      const href = url.startsWith("www.") ? `https://${url}` : url;
+      return (
+        <span key={i}>
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline break-all"
+          >
+            {url}
+          </a>
+          {trailing}
+        </span>
+      );
+    });
+}
+
 function MemberLink({ name, memberId }) {
   const slug = slugify(name);
   return (
@@ -133,10 +163,10 @@ function FeedItem({ item, isNew, isOwn, onUndo }) {
             {item.type === "completion" ? (
               <>
                 completed:{" "}
-                <span className="text-foreground/70">{item.text}</span>
+                <span className="text-foreground/70"><Linkify text={item.text} /></span>
               </>
             ) : (
-              <span className="text-foreground/70">{item.text}</span>
+              <span className="text-foreground/70"><Linkify text={item.text} /></span>
             )}
           </p>
           <div className="flex items-center gap-3 mt-1">
