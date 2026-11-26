@@ -779,9 +779,9 @@ export default function CollaborationStation({
       </p>
 
       {/* 3-column layout */}
-      <div className="grid gap-6 lg:grid-cols-3 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:flex-1 lg:min-h-0">
         {/* Left: Things You Can Do */}
-        <div className="lg:overflow-y-auto lg:pr-1">
+        <div className="min-w-0 lg:overflow-y-auto lg:pr-1">
           <h2 className="font-display text-lg font-bold mb-4">
             Things You Can Do
           </h2>
@@ -809,7 +809,7 @@ export default function CollaborationStation({
         </div>
 
         {/* Middle: Things We've Done */}
-        <div className="lg:overflow-y-auto lg:pr-1 flex flex-col">
+        <div className="min-w-0 lg:overflow-y-auto lg:pr-1 flex flex-col">
           <h2 className="font-display text-lg font-bold mb-4">
             Things We&rsquo;ve Done
           </h2>
@@ -841,7 +841,7 @@ export default function CollaborationStation({
         </div>
 
         {/* Right: Can you help? */}
-        <div className="lg:overflow-y-auto lg:pr-1 flex flex-col">
+        <div className="min-w-0 lg:overflow-y-auto lg:pr-1 flex flex-col">
           <h2 className="font-display text-lg font-bold mb-4">
             Can you help?
           </h2>

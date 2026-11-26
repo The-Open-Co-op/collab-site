@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
+/* Sawarabi Mincho's curly quotes and dashes are full-width (Japanese), which
+   leaves big gaps after apostrophes. This tiny self-hosted subset of Gelasio
+   (SIL OFL, see /fonts/punctuation-fix-OFL.txt) supplies just those glyphs.
+   Self-hosted rather than local() because Android has no Georgia/Times. */
 @font-face {
   font-family: "Punctuation Fix";
-  src: local("Georgia"), local("Times New Roman");
+  src: url("/fonts/punctuation-fix.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
   unicode-range: U+2018-201F, U+2013-2014;
 }
 
